@@ -141,7 +141,7 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
   // Create framework-specific directory structure
   let libDir = "lib";
-  
+
   // Framework-specific paths
   if (framework === "nextjs") {
     libDir = "lib"; // Next.js standard
@@ -169,7 +169,9 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
   console.log("1. Copy .env.example to .env and update DATABASE_URL");
   console.log("2. Run: npx prisma migrate dev --name init");
   console.log("3. Run: npx prisma generate");
-  console.log(`4. Import Prisma client: import { prisma } from './${libDir}/prisma'`);
+  console.log(
+    `4. Import Prisma client: import { prisma } from './${libDir}/prisma'`
+  );
 };
 
 const generateMongoDBSetup = (secret, framework = "nextjs") => {
@@ -282,7 +284,9 @@ VISTA_AUTH_SECRET="${secret}"
   fs.writeFileSync(`${libDir}/mongodb-setup.ts`, connectionFile);
   fs.writeFileSync(".env.example", envExample);
 
-  console.log("✅ Generated MongoDB connection setup with native driver and Mongoose");
+  console.log(
+    "✅ Generated MongoDB connection setup with native driver and Mongoose"
+  );
   console.log(`✅ Generated MongoDB setup in ${libDir}/mongodb-setup.ts`);
   console.log("✅ Generated .env.example with MongoDB configuration");
   console.log("\n📝 Next steps:");
@@ -290,7 +294,9 @@ VISTA_AUTH_SECRET="${secret}"
   console.log("2. Choose your approach:");
   console.log("   • Native Driver: Import and call connectMongoDB()");
   console.log("   • Mongoose ODM: Import and call connectMongoose()");
-  console.log(`3. Import: import { connectMongoDB } from './${libDir}/mongodb-setup'`);
+  console.log(
+    `3. Import: import { connectMongoDB } from './${libDir}/mongodb-setup'`
+  );
 };
 
 const generateSupabaseSetup = (secret, framework = "nextjs") => {
@@ -704,13 +710,17 @@ async function init() {
       if (dbConfig) {
         // Install production packages
         if (dbConfig.packages && dbConfig.packages.length > 0) {
-          console.log(`📦 Installing packages: ${dbConfig.packages.join(", ")}`);
+          console.log(
+            `📦 Installing packages: ${dbConfig.packages.join(", ")}`
+          );
           await installPackages(dbConfig.packages, false);
         }
-        
+
         // Install dev packages
         if (dbConfig.devPackages && dbConfig.devPackages.length > 0) {
-          console.log(`📦 Installing dev packages: ${dbConfig.devPackages.join(", ")}`);
+          console.log(
+            `📦 Installing dev packages: ${dbConfig.devPackages.join(", ")}`
+          );
           await installPackages(dbConfig.devPackages, true);
         }
       }

@@ -49,6 +49,50 @@ yarn add vista-auth
 pnpm add vista-auth
 ```
 
+## 🛠️ CLI Commands
+
+Vista Auth includes a comprehensive CLI to help with setup and provide guidance:
+
+### Basic Commands
+
+```bash
+# Initialize new project with interactive setup
+npx vista-auth init
+
+# Generate secure authentication secret
+npx vista-auth generate-secret
+
+# Show all available commands
+npx vista-auth --help
+```
+
+### Detailed Help Topics
+
+```bash
+# Get help with API routes and authentication flow
+npx vista-auth --help api
+
+# Learn middleware setup for all frameworks
+npx vista-auth --help middleware
+
+# Cookie management and security guidelines
+npx vista-auth --help cookies
+
+# Database setup and adapter configuration
+npx vista-auth --help database
+
+# Complete implementation examples
+npx vista-auth --help examples
+```
+
+### What Each Help Topic Covers
+
+- **`--help api`**: Complete API route examples for login, logout, session management with Next.js, Express, and Remix
+- **`--help middleware`**: Framework-specific middleware setup for Next.js App Router, Express, Remix, and React Router
+- **`--help cookies`**: Cookie security best practices, debugging, and authentication flow management
+- **`--help database`**: Database adapter setup for Prisma, MongoDB, Supabase, PostgreSQL, Firebase, and Memory
+- **`--help examples`**: Full implementation examples with 5-minute setup guides for each framework
+
 ---
 
 ## 🚀 Quick Start
