@@ -107,20 +107,18 @@ function createConfigFile(answers) {
   const isTypeScript = answers.language === "typescript";
   const fileExt = isTypeScript ? "ts" : "js";
 
-  // Handle database adapter import - skip for 'none'
+  // Handle database adapter import - use memory adapter for localStorage
   const databaseImport =
     answers.database === "none"
-      ? ""
+      ? `import { createMemoryAdapter } from 'vista-auth/database';`
       : `import { create${capitalize(
           answers.database
         )}Adapter } from 'vista-auth/database';`;
 
   const databaseConfig =
     answers.database === "none"
-      ? "// database: null, // No database - using localStorage only"
-      : `  const databaseConfig = answers.database === 'none'
-    ? 'database: null, // No database - using localStorage only'
-    : `// database: create${capitalize(answers.database)}Adapter(db),`;${capitalize(answers.database)}Adapter(db),`;
+      ? "database: createMemoryAdapter(), // In-memory storage for localStorage-only mode"
+      : `// database: create${capitalize(answers.database)}Adapter(db),`;
 
   const config = `import { createVistaAuth } from 'vista-auth/server';
 ${databaseImport}
@@ -172,7 +170,9 @@ function createApiRoutes(answers) {
     const isTypeScript = answers.language === "typescript";
     const fileExt = isTypeScript ? "ts" : "js";
     const requestType = isTypeScript ? ": NextRequest" : "";
-    const imports = isTypeScript ? `import { NextRequest } from 'next/server';\n` : '';
+    const imports = isTypeScript
+      ? `import { NextRequest } from 'next/server';\n`
+      : "";
 
     // Create signup route
     const signupRoute = `${imports}import { auth } from '@/vista-auth.config';

@@ -346,3 +346,71 @@ export function createFirebaseAdapter(firestore: any): DatabaseAdapter {
     },
   };
 }
+
+/**
+ * Memory Adapter
+ * In-memory storage for development/testing or localStorage-only mode
+ * Note: Data is lost when the server restarts
+ */
+export function createMemoryAdapter(): DatabaseAdapter {
+  const users = new Map<string, User>();
+  const usersByEmail = new Map<string, User>();
+  const sessions = new Map<string, Session>();
+
+  return {
+    async findUserByEmail(email: string) {
+      return usersByEmail.get(email) || null;
+    },
+
+    async findUserById(id: string) {
+      return users.get(id) || null;
+    },
+
+    async createUser(data: Partial<User>) {
+      const user = data as User;
+      users.set(user.id, user);
+      usersByEmail.set(user.email, user);
+      return user;
+    },
+
+    async updateUser(id: string, data: Partial<User>) {
+      const existingUser = users.get(id);
+      if (!existingUser) throw new Error("User not found");
+
+      const updatedUser = { ...existingUser, ...data };
+      users.set(id, updatedUser);
+      usersByEmail.set(updatedUser.email, updatedUser);
+      return updatedUser;
+    },
+
+    async deleteUser(id: string) {
+      const user = users.get(id);
+      if (user) {
+        users.delete(id);
+        usersByEmail.delete(user.email);
+      }
+    },
+
+    async createSession(userId: string, sessionData: any) {
+      const session = sessionData as Session;
+      sessions.set(session.sessionId, session);
+      return session;
+    },
+
+    async getSession(sessionId: string) {
+      return sessions.get(sessionId) || null;
+    },
+
+    async deleteSession(sessionId: string) {
+      sessions.delete(sessionId);
+    },
+
+    async deleteUserSessions(userId: string) {
+      for (const [sessionId, session] of sessions.entries()) {
+        if (session.userId === userId) {
+          sessions.delete(sessionId);
+        }
+      }
+    },
+  };
+}
