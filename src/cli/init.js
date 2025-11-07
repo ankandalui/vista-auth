@@ -15,6 +15,15 @@ async function init() {
   const answers = await prompts([
     {
       type: "select",
+      name: "language",
+      message: "Which language do you prefer?",
+      choices: [
+        { title: "TypeScript (.ts/.tsx)", value: "typescript" },
+        { title: "JavaScript (.js/.jsx)", value: "javascript" },
+      ],
+    },
+    {
+      type: "select",
       name: "framework",
       message: "Which framework are you using?",
       choices: [
@@ -66,15 +75,37 @@ async function init() {
   // Create example components
   createExamples(answers);
 
+  const isTypeScript = answers.language === "typescript";
+  const configExt = isTypeScript ? "ts" : "js";
+  const componentExt = isTypeScript ? "tsx" : "jsx";
+  const routeExt = isTypeScript ? "ts" : "js";
+
   console.log("\n✅ Setup complete!\n");
-  console.log("Next steps:");
-  console.log("1. Configure your database in the auth config");
-  console.log("2. Wrap your app with <AuthProvider>");
-  console.log("3. Use useAuth() hook in your components");
-  console.log("\nDocs: https://github.com/vista-auth/vista-auth\n");
+  console.log("📁 Files created:");
+  console.log(`   vista-auth.config.${configExt}        - Auth configuration`);
+  console.log(
+    `   auth-utils/providers.${componentExt}    - Auth provider setup`
+  );
+  if (answers.framework === "nextjs") {
+    console.log(
+      `   app/api/auth/route.${routeExt}      - API routes (Next.js)`
+    );
+  }
+  console.log("   examples/                   - Example components");
+  console.log("\n🚀 Next steps:");
+  console.log(`1. Import Providers in your layout.${componentExt}:`);
+  console.log("   import { Providers } from './auth-utils/providers';");
+  console.log("2. Wrap your app: <Providers>{children}</Providers>");
+  console.log("3. Use useAuth() hook in components");
+  console.log("4. Check examples/ folder for usage examples");
+  console.log(`\n📖 Language: ${isTypeScript ? "TypeScript" : "JavaScript"}`);
+  console.log("📖 Docs: https://github.com/ankandalui/vista-auth\n");
 }
 
 function createConfigFile(answers) {
+  const isTypeScript = answers.language === "typescript";
+  const fileExt = isTypeScript ? "ts" : "js";
+
   const config = `import { createVistaAuth } from 'vista-auth/server';
 import { create${capitalize(
     answers.database
@@ -114,15 +145,18 @@ export const auth = createVistaAuth({
 });
 `;
 
-  fs.writeFileSync("vista-auth.config.js", config);
-  console.log("✓ Created vista-auth.config.js");
+  fs.writeFileSync(`vista-auth.config.${fileExt}`, config);
+  console.log(`✓ Created vista-auth.config.${fileExt}`);
 }
 
 function createApiRoutes(answers) {
   if (answers.framework === "nextjs") {
+    const isTypeScript = answers.language === "typescript";
+    const fileExt = isTypeScript ? "ts" : "js";
+
     const routeHandler = `import { auth } from '@/vista-auth.config';
 
-export async function POST(request) {
+export async function POST(request${isTypeScript ? ": Request" : ""}) {
   const body = await request.json();
   
   if (request.url.includes('/signin')) {
@@ -145,7 +179,7 @@ export async function POST(request) {
   return Response.json({ error: 'Invalid endpoint' }, { status: 404 });
 }
 
-export async function GET(request) {
+export async function GET(request${isTypeScript ? ": Request" : ""}) {
   const token = request.headers.get('Authorization')?.replace('Bearer ', '');
   const result = await auth.getSession(token);
   return Response.json(result);
@@ -153,17 +187,31 @@ export async function GET(request) {
 `;
 
     fs.mkdirSync("app/api/auth", { recursive: true });
-    fs.writeFileSync("app/api/auth/route.js", routeHandler);
-    console.log("✓ Created app/api/auth/route.js");
+    fs.writeFileSync(`app/api/auth/route.${fileExt}`, routeHandler);
+    console.log(`✓ Created app/api/auth/route.${fileExt}`);
   }
 }
 
 function createProviderSetup(answers) {
+  const isTypeScript = answers.language === "typescript";
+  const fileExt = isTypeScript ? "tsx" : "jsx";
+
   const provider = `'use client';
 
-import { AuthProvider } from 'vista-auth/client';
+import { AuthProvider } from 'vista-auth/client';${
+    isTypeScript
+      ? `
+import { ReactNode } from 'react';
 
-export function Providers({ children }) {
+interface ProvidersProps {
+  children: ReactNode;
+}`
+      : ""
+  }
+
+export function Providers({ children }${
+    isTypeScript ? ": ProvidersProps" : ""
+  }) {
   return (
     <AuthProvider
       apiEndpoint="/api/auth"
@@ -187,58 +235,129 @@ export function Providers({ children }) {
 }
 `;
 
-  fs.writeFileSync("providers.jsx", provider);
-  console.log("✓ Created providers.jsx");
+  // Create auth-utils folder and put providers inside it
+  fs.mkdirSync("auth-utils", { recursive: true });
+  fs.writeFileSync(`auth-utils/providers.${fileExt}`, provider);
+  console.log(`✓ Created auth-utils/providers.${fileExt}`);
 }
 
 function createExamples(answers) {
+  const isTypeScript = answers.language === "typescript";
+  const fileExt = isTypeScript ? "tsx" : "jsx";
+
   const loginExample = `'use client';
 
 import { useAuth } from 'vista-auth/client';
-import { useState } from 'react';
+import { useState${isTypeScript ? ", FormEvent" : ""} } from 'react';
 
 export default function LoginPage() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, isLoading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e${
+    isTypeScript ? ": FormEvent<HTMLFormElement>" : ""
+  }) => {
     e.preventDefault();
-    if (isSignUp) {
-      await signUp({ email, password });
-    } else {
-      await signIn({ email, password });
+    
+    try {
+      if (isSignUp) {
+        await signUp({ email, password, name });
+      } else {
+        await signIn({ email, password });
+      }
+    } catch (err) {
+      console.error('Auth error:', err);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <button type="submit">{isSignUp ? 'Sign Up' : 'Sign In'}</button>
-      <button type="button" onClick={() => setIsSignUp(!isSignUp)}>
-        {isSignUp ? 'Already have an account?' : 'Need an account?'}
-      </button>
-    </form>
+    <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
+      <h1 className="text-2xl font-bold mb-6 text-center">
+        {isSignUp ? 'Sign Up' : 'Sign In'}
+      </h1>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {isSignUp && (
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium mb-1">
+              Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required={isSignUp}
+            />
+          </div>
+        )}
+        
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium mb-1">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            required
+          />
+        </div>
+        
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium mb-1">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            required
+            minLength={6}
+          />
+        </div>
+        
+        {error && (
+          <div className="text-red-600 text-sm">{error}</div>
+        )}
+        
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isLoading ? 'Loading...' : (isSignUp ? 'Sign Up' : 'Sign In')}
+        </button>
+      </form>
+      
+      <div className="mt-4 text-center">
+        <button
+          type="button"
+          onClick={() => setIsSignUp(!isSignUp)}
+          className="text-blue-600 hover:text-blue-800 text-sm"
+        >
+          {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+        </button>
+      </div>
+    </div>
   );
 }
 `;
 
   fs.mkdirSync("examples", { recursive: true });
-  fs.writeFileSync("examples/login.jsx", loginExample);
-  console.log("✓ Created examples/login.jsx");
+  fs.writeFileSync(`examples/login.${fileExt}`, loginExample);
+  console.log(`✓ Created examples/login.${fileExt}`);
 
   if (answers.features.includes("rbac")) {
     const protectedExample = `'use client';
@@ -247,19 +366,93 @@ import { ProtectedRoute } from 'vista-auth/guards';
 import { useAuth } from 'vista-auth/client';
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
-    <ProtectedRoute roles={['admin']} redirect="/login">
-      <h1>Admin Dashboard</h1>
-      <p>Welcome, {user?.name}!</p>
+    <ProtectedRoute 
+      roles={['admin']} 
+      redirect="/examples/login"
+      fallback={<div>Access denied. Admin role required.</div>}
+    >
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <button
+              onClick={handleSignOut}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Sign Out
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h2 className="text-xl font-semibold mb-2">Welcome, {user?.name}!</h2>
+              <p className="text-gray-600">Email: {user?.email}</p>
+              <p className="text-gray-600">Roles: {user?.roles?.join(', ')}</p>
+            </div>
+            
+            <div className="bg-green-50 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">Admin Features</h3>
+              <ul className="text-sm text-gray-600">
+                <li>• User Management</li>
+                <li>• System Settings</li>
+                <li>• Analytics Dashboard</li>
+                <li>• Security Logs</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
     </ProtectedRoute>
   );
 }
 `;
-    fs.writeFileSync("examples/protected-route.jsx", protectedExample);
-    console.log("✓ Created examples/protected-route.jsx");
+    fs.writeFileSync(`examples/protected-route.${fileExt}`, protectedExample);
+    console.log(`✓ Created examples/protected-route.${fileExt}`);
   }
+
+  // Create layout example with proper provider import
+  const layoutExample = `import { Providers } from '../auth-utils/providers';${
+    isTypeScript
+      ? `
+import './globals.css';
+
+export const metadata = {
+  title: 'Vista Auth Demo',
+  description: 'Authentication demo with Vista Auth',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {`
+      : `
+
+export default function RootLayout({ children }) {`
+  }
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+`;
+
+  fs.writeFileSync(`examples/layout.${fileExt}`, layoutExample);
+  console.log(
+    `✓ Created examples/layout.${fileExt} (with correct provider import)`
+  );
 }
 
 function capitalize(str) {
