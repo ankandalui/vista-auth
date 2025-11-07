@@ -1,0 +1,97 @@
+{
+  "name": "vista-auth",
+  "version": "1.0.0",
+  "description": "Simple, powerful, and secure authentication for React apps - works with any framework",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "vista-auth": "./bin/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js",
+      "require": "./dist/client/index.cjs"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js",
+      "require": "./dist/server/index.cjs"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "import": "./dist/middleware/index.js",
+      "require": "./dist/middleware/index.cjs"
+    },
+    "./guards": {
+      "types": "./dist/guards/index.d.ts",
+      "import": "./dist/guards/index.js",
+      "require": "./dist/guards/index.cjs"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "import": "./dist/ui/index.js",
+      "require": "./dist/ui/index.cjs"
+    },
+    "./database": {
+      "types": "./dist/database/index.d.ts",
+      "import": "./dist/database/index.js",
+      "require": "./dist/database/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "auth",
+    "authentication",
+    "react",
+    "nextjs",
+    "remix",
+    "vite",
+    "security",
+    "session",
+    "jwt",
+    "oauth",
+    "rbac",
+    "role-based-access"
+  ],
+  "author": "ankandalui",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ankandalui/vista-auth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ankandalui/vista-auth/issues"
+  },
+  "homepage": "https://github.com/ankandalui/vista-auth#readme",
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "nanoid": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}
