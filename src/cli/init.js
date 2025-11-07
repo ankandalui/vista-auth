@@ -107,17 +107,17 @@ function createConfigFile(answers) {
   const isTypeScript = answers.language === "typescript";
   const fileExt = isTypeScript ? "ts" : "js";
 
-  // Handle database adapter import - use memory adapter for localStorage
+  // Handle database adapter import - use localStorage-first for localStorage persistence
   const databaseImport =
     answers.database === "none"
-      ? `import { createMemoryAdapter } from 'vista-auth/database';`
+      ? `import { createLocalStorageFirstAdapter } from 'vista-auth/database';`
       : `import { create${capitalize(
           answers.database
         )}Adapter } from 'vista-auth/database';`;
 
   const databaseConfig =
     answers.database === "none"
-      ? "database: createMemoryAdapter(), // In-memory storage for localStorage-only mode"
+      ? "database: createLocalStorageFirstAdapter(), // Hybrid: server memory + localStorage sync"
       : `// database: create${capitalize(answers.database)}Adapter(db),`;
 
   const config = `import { createVistaAuth } from 'vista-auth/server';

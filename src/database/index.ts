@@ -414,3 +414,318 @@ export function createMemoryAdapter(): DatabaseAdapter {
     },
   };
 }
+
+/**
+ * Browser LocalStorage Adapter (LEGACY - use createLocalStorageFirstAdapter instead)
+ * Stores user data in browser localStorage for persistence across page reloads
+ * Perfect for client-side only applications or demos
+ */
+export function createBrowserStorageAdapter(): DatabaseAdapter {
+  const USERS_KEY = "vista-auth-users";
+  const SESSIONS_KEY = "vista-auth-sessions";
+
+  // Helper functions for localStorage operations
+  const getUsers = (): Map<string, User> => {
+    if (typeof window === "undefined") return new Map(); // SSR safety
+    try {
+      const data = localStorage.getItem(USERS_KEY);
+      if (!data) return new Map();
+      const parsed = JSON.parse(data);
+      return new Map(Object.entries(parsed));
+    } catch {
+      return new Map();
+    }
+  };
+
+  const saveUsers = (users: Map<string, User>): void => {
+    if (typeof window === "undefined") return; // SSR safety
+    try {
+      const obj = Object.fromEntries(users);
+      localStorage.setItem(USERS_KEY, JSON.stringify(obj));
+    } catch (error) {
+      console.error("Failed to save users to localStorage:", error);
+    }
+  };
+
+  const getSessions = (): Map<string, Session> => {
+    if (typeof window === "undefined") return new Map(); // SSR safety
+    try {
+      const data = localStorage.getItem(SESSIONS_KEY);
+      if (!data) return new Map();
+      const parsed = JSON.parse(data);
+      return new Map(Object.entries(parsed));
+    } catch {
+      return new Map();
+    }
+  };
+
+  const saveSessions = (sessions: Map<string, Session>): void => {
+    if (typeof window === "undefined") return; // SSR safety
+    try {
+      const obj = Object.fromEntries(sessions);
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(obj));
+    } catch (error) {
+      console.error("Failed to save sessions to localStorage:", error);
+    }
+  };
+
+  return {
+    async findUserByEmail(email: string) {
+      const users = getUsers();
+      for (const user of users.values()) {
+        if (user.email === email) {
+          return user;
+        }
+      }
+      return null;
+    },
+
+    async findUserById(id: string) {
+      const users = getUsers();
+      return users.get(id) || null;
+    },
+
+    async createUser(data: Partial<User>) {
+      const users = getUsers();
+      const user = data as User;
+      users.set(user.id, user);
+      saveUsers(users);
+      return user;
+    },
+
+    async updateUser(id: string, data: Partial<User>) {
+      const users = getUsers();
+      const existingUser = users.get(id);
+      if (!existingUser) throw new Error("User not found");
+
+      const updatedUser = { ...existingUser, ...data };
+      users.set(id, updatedUser);
+      saveUsers(users);
+      return updatedUser;
+    },
+
+    async deleteUser(id: string) {
+      const users = getUsers();
+      users.delete(id);
+      saveUsers(users);
+    },
+
+    async createSession(userId: string, sessionData: any) {
+      const sessions = getSessions();
+      const session = sessionData as Session;
+      sessions.set(session.sessionId, session);
+      saveSessions(sessions);
+      return session;
+    },
+
+    async getSession(sessionId: string) {
+      const sessions = getSessions();
+      return sessions.get(sessionId) || null;
+    },
+
+    async deleteSession(sessionId: string) {
+      const sessions = getSessions();
+      sessions.delete(sessionId);
+      saveSessions(sessions);
+    },
+
+    async deleteUserSessions(userId: string) {
+      const sessions = getSessions();
+      for (const [sessionId, session] of sessions.entries()) {
+        if (session.userId === userId) {
+          sessions.delete(sessionId);
+        }
+      }
+      saveSessions(sessions);
+    },
+  };
+}
+
+/**
+ * LocalStorage-First Adapter
+ * Hybrid approach: Server memory as primary + localStorage sync for persistence
+ * Perfect for single-user apps with localStorage persistence needs
+ */
+export function createLocalStorageFirstAdapter(): DatabaseAdapter {
+  // Server-side memory storage (primary)
+  const users = new Map<string, User>();
+  const usersByEmail = new Map<string, User>();
+  const sessions = new Map<string, Session>();
+
+  // localStorage keys
+  const USERS_KEY = "vista-auth-users-lsf";
+  const SESSIONS_KEY = "vista-auth-sessions-lsf";
+  const SYNC_KEY = "vista-auth-sync-timestamp";
+
+  // Client-side localStorage helpers
+  const isClient = typeof window !== "undefined";
+
+  const syncToLocalStorage = () => {
+    if (!isClient) return;
+
+    try {
+      // Save users
+      const usersObj = Object.fromEntries(users);
+      localStorage.setItem(USERS_KEY, JSON.stringify(usersObj));
+
+      // Save sessions
+      const sessionsObj = Object.fromEntries(sessions);
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessionsObj));
+
+      // Save sync timestamp
+      localStorage.setItem(SYNC_KEY, Date.now().toString());
+
+      console.log("[Vista Auth] Synced to localStorage:", {
+        users: users.size,
+        sessions: sessions.size,
+      });
+    } catch (error) {
+      console.error("[Vista Auth] Failed to sync to localStorage:", error);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
+    if (!isClient) return false;
+
+    try {
+      // Load users
+      const usersData = localStorage.getItem(USERS_KEY);
+      if (usersData) {
+        const usersObj = JSON.parse(usersData);
+        users.clear();
+        usersByEmail.clear();
+
+        for (const [id, user] of Object.entries(usersObj)) {
+          users.set(id, user as User);
+          usersByEmail.set((user as User).email, user as User);
+        }
+      }
+
+      // Load sessions
+      const sessionsData = localStorage.getItem(SESSIONS_KEY);
+      if (sessionsData) {
+        const sessionsObj = JSON.parse(sessionsData);
+        sessions.clear();
+
+        for (const [sessionId, session] of Object.entries(sessionsObj)) {
+          sessions.set(sessionId, session as Session);
+        }
+      }
+
+      const syncTime = localStorage.getItem(SYNC_KEY);
+      console.log("[Vista Auth] Loaded from localStorage:", {
+        users: users.size,
+        sessions: sessions.size,
+        lastSync: syncTime
+          ? new Date(parseInt(syncTime)).toISOString()
+          : "never",
+      });
+
+      return users.size > 0 || sessions.size > 0;
+    } catch (error) {
+      console.error("[Vista Auth] Failed to load from localStorage:", error);
+      return false;
+    }
+  };
+
+  // Initialize by loading from localStorage
+  const initialized = loadFromLocalStorage();
+
+  if (initialized) {
+    console.log(
+      "[Vista Auth] LocalStorage-First: Restored data from localStorage"
+    );
+  } else {
+    console.log(
+      "[Vista Auth] LocalStorage-First: Starting fresh (no localStorage data found)"
+    );
+  }
+
+  return {
+    async findUserByEmail(email: string) {
+      return usersByEmail.get(email) || null;
+    },
+
+    async findUserById(id: string) {
+      return users.get(id) || null;
+    },
+
+    async createUser(data: Partial<User>) {
+      const user = data as User;
+
+      // Update server memory
+      users.set(user.id, user);
+      usersByEmail.set(user.email, user);
+
+      // Sync to localStorage
+      syncToLocalStorage();
+
+      return user;
+    },
+
+    async updateUser(id: string, data: Partial<User>) {
+      const existingUser = users.get(id);
+      if (!existingUser) throw new Error("User not found");
+
+      const updatedUser = { ...existingUser, ...data };
+
+      // Update server memory
+      users.set(id, updatedUser);
+      usersByEmail.delete(existingUser.email); // Remove old email mapping
+      usersByEmail.set(updatedUser.email, updatedUser);
+
+      // Sync to localStorage
+      syncToLocalStorage();
+
+      return updatedUser;
+    },
+
+    async deleteUser(id: string) {
+      const user = users.get(id);
+      if (user) {
+        // Update server memory
+        users.delete(id);
+        usersByEmail.delete(user.email);
+
+        // Sync to localStorage
+        syncToLocalStorage();
+      }
+    },
+
+    async createSession(userId: string, sessionData: any) {
+      const session = sessionData as Session;
+
+      // Update server memory
+      sessions.set(session.sessionId, session);
+
+      // Sync to localStorage
+      syncToLocalStorage();
+
+      return session;
+    },
+
+    async getSession(sessionId: string) {
+      return sessions.get(sessionId) || null;
+    },
+
+    async deleteSession(sessionId: string) {
+      // Update server memory
+      sessions.delete(sessionId);
+
+      // Sync to localStorage
+      syncToLocalStorage();
+    },
+
+    async deleteUserSessions(userId: string) {
+      // Update server memory
+      for (const [sessionId, session] of sessions.entries()) {
+        if (session.userId === userId) {
+          sessions.delete(sessionId);
+        }
+      }
+
+      // Sync to localStorage
+      syncToLocalStorage();
+    },
+  };
+}

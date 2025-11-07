@@ -25,6 +25,8 @@ export class VistaAuthServer {
     >
   >;
   private database?: DatabaseAdapter;
+  private statelessMode: boolean;
+  private statelessUsers: Map<string, User> = new Map(); // In-memory user storage for stateless mode
 
   constructor(config: AuthConfig = {}) {
     this.config = {
@@ -37,10 +39,18 @@ export class VistaAuthServer {
       sessionDuration: config.sessionDuration || 7 * 24 * 60 * 60 * 1000, // 7 days
     };
     this.database = config.database;
+    // Enable stateless mode when no database is provided
+    this.statelessMode = !config.database;
 
     if (!config.jwtSecret && !process.env.VISTA_AUTH_SECRET) {
       console.warn(
         "[Vista Auth] No JWT secret provided. Using default (INSECURE). Set VISTA_AUTH_SECRET environment variable."
+      );
+    }
+
+    if (this.statelessMode) {
+      console.log(
+        "[Vista Auth] Running in stateless mode - user data stored in JWT tokens and server memory"
       );
     }
   }
@@ -84,6 +94,65 @@ export class VistaAuthServer {
     data: SignUpData
   ): Promise<AuthResponse<{ user: User; token: string; session: Session }>> {
     try {
+      // Stateless mode - use in-memory storage
+      if (this.statelessMode) {
+        // Check if user already exists
+        const existingUser = Array.from(this.statelessUsers.values()).find(
+          (u) => u.email === data.email
+        );
+        if (existingUser) {
+          throw this.createError(
+            "USER_EXISTS",
+            "User with this email already exists",
+            400
+          );
+        }
+
+        // Hash password
+        const hashedPassword = await this.hashPassword(data.password);
+
+        // Create user
+        const user: User = {
+          id: nanoid(),
+          email: data.email,
+          name: data.name,
+          roles: ["user"], // Default role
+          permissions: [],
+          metadata: {
+            ...data.metadata,
+            password: hashedPassword,
+          },
+        };
+
+        // Store user in memory
+        this.statelessUsers.set(user.id, user);
+
+        // Remove password from user object
+        const userWithoutPassword = this.sanitizeUser(user);
+
+        // Create session
+        const session = await this.createSession(user.id, userWithoutPassword);
+
+        // Generate token with user data embedded
+        const token = this.generateToken({
+          userId: user.id,
+          sessionId: session.sessionId,
+          userData: userWithoutPassword, // Embed user data in token
+          exp: Math.floor(session.expiresAt / 1000),
+          iat: Math.floor(session.createdAt / 1000),
+        });
+
+        return {
+          success: true,
+          data: {
+            user: userWithoutPassword,
+            token,
+            session,
+          },
+        };
+      }
+
+      // Database mode
       if (!this.database) {
         throw this.createError(
           "NO_DATABASE",
@@ -155,6 +224,68 @@ export class VistaAuthServer {
     credentials: SignInCredentials
   ): Promise<AuthResponse<{ user: User; token: string; session: Session }>> {
     try {
+      // Stateless mode - use in-memory storage
+      if (this.statelessMode) {
+        // Find user
+        const user = Array.from(this.statelessUsers.values()).find(
+          (u) => u.email === credentials.email
+        );
+        if (!user) {
+          throw this.createError(
+            "INVALID_CREDENTIALS",
+            "Invalid email or password",
+            401
+          );
+        }
+
+        // Verify password
+        const passwordHash = user.metadata?.password;
+        if (!passwordHash) {
+          throw this.createError(
+            "NO_PASSWORD",
+            "User has no password set",
+            500
+          );
+        }
+
+        const isValid = await this.verifyPassword(
+          credentials.password,
+          passwordHash
+        );
+        if (!isValid) {
+          throw this.createError(
+            "INVALID_CREDENTIALS",
+            "Invalid email or password",
+            401
+          );
+        }
+
+        // Remove password from user object
+        const userWithoutPassword = this.sanitizeUser(user);
+
+        // Create session
+        const session = await this.createSession(user.id, userWithoutPassword);
+
+        // Generate token with user data embedded
+        const token = this.generateToken({
+          userId: user.id,
+          sessionId: session.sessionId,
+          userData: userWithoutPassword, // Embed user data in token
+          exp: Math.floor(session.expiresAt / 1000),
+          iat: Math.floor(session.createdAt / 1000),
+        });
+
+        return {
+          success: true,
+          data: {
+            user: userWithoutPassword,
+            token,
+            session,
+          },
+        };
+      }
+
+      // Database mode
       if (!this.database) {
         throw this.createError(
           "NO_DATABASE",
@@ -235,6 +366,38 @@ export class VistaAuthServer {
         );
       }
 
+      // Stateless mode - get user data from token or memory
+      if (this.statelessMode) {
+        let userWithoutPassword: User;
+
+        if (payload.userData) {
+          // User data is embedded in token
+          userWithoutPassword = payload.userData;
+        } else {
+          // Fall back to memory storage
+          const user = this.statelessUsers.get(payload.userId);
+          if (!user) {
+            throw this.createError("USER_NOT_FOUND", "User not found", 404);
+          }
+          userWithoutPassword = this.sanitizeUser(user);
+        }
+
+        const session: Session = {
+          sessionId: payload.sessionId,
+          userId: payload.userId,
+          user: userWithoutPassword,
+          expiresAt: payload.exp * 1000,
+          createdAt: payload.iat * 1000,
+          lastActivity: Date.now(),
+        };
+
+        return {
+          success: true,
+          data: session,
+        };
+      }
+
+      // Database mode
       if (!this.database) {
         throw this.createError(
           "NO_DATABASE",
