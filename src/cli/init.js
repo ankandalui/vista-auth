@@ -106,17 +106,24 @@ function createConfigFile(answers) {
   const isTypeScript = answers.language === "typescript";
   const fileExt = isTypeScript ? "ts" : "js";
 
+  // Handle database adapter import - skip for 'none'
+  const databaseImport = answers.database === 'none' 
+    ? '' 
+    : `import { create${capitalize(answers.database)}Adapter } from 'vista-auth/database';`;
+
+  const databaseConfig = answers.database === 'none'
+    ? '// database: null, // No database - using localStorage only'
+    : `// database: create${capitalize(answers.database)}Adapter(db),`;
+
   const config = `import { createVistaAuth } from 'vista-auth/server';
-import { create${capitalize(
-    answers.database
-  )}Adapter } from 'vista-auth/database';
+${databaseImport}
 
 // Configure your database
-// import { db } from './your-database-setup';
+${answers.database !== 'none' ? '// import { db } from \'./your-database-setup\';' : ''}
 
 export const auth = createVistaAuth({
   // Database adapter
-  // database: create${capitalize(answers.database)}Adapter(db),
+  ${databaseConfig}
   
   // JWT secret (use environment variable in production!)
   jwtSecret: process.env.VISTA_AUTH_SECRET || 'your-secret-key',

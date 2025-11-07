@@ -27,6 +27,7 @@ interface AuthContextValue {
   session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
   signIn: (
     credentials: SignInCredentials
   ) => Promise<{ success: boolean; error?: string }>;
@@ -55,6 +56,7 @@ export function AuthProvider({
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const storage = new SessionStorage(config);
   const wsSync = config.sessionSyncEnabled
@@ -131,6 +133,7 @@ export function AuthProvider({
   const signIn = useCallback(
     async (credentials: SignInCredentials) => {
       try {
+        setError(null); // Clear previous errors
         const response = await fetch(`${apiEndpoint}/signin`, {
           method: "POST",
           headers: {
@@ -166,6 +169,7 @@ export function AuthProvider({
           return { success: true };
         } else {
           const errorMessage = data.error?.message || "Sign in failed";
+          setError(errorMessage);
           if (config.errorMessagesEnabled !== false) {
             showError(errorMessage);
           }
@@ -173,6 +177,7 @@ export function AuthProvider({
         }
       } catch (error: any) {
         const errorMessage = error.message || "Network error";
+        setError(errorMessage);
         config.onError?.({ code: "NETWORK_ERROR", message: errorMessage });
         if (config.errorMessagesEnabled !== false) {
           showError(errorMessage);
@@ -186,6 +191,7 @@ export function AuthProvider({
   const signUp = useCallback(
     async (data: SignUpData) => {
       try {
+        setError(null); // Clear previous errors
         const response = await fetch(`${apiEndpoint}/signup`, {
           method: "POST",
           headers: {
@@ -221,6 +227,7 @@ export function AuthProvider({
           return { success: true };
         } else {
           const errorMessage = result.error?.message || "Sign up failed";
+          setError(errorMessage);
           if (config.errorMessagesEnabled !== false) {
             showError(errorMessage);
           }
@@ -228,6 +235,7 @@ export function AuthProvider({
         }
       } catch (error: any) {
         const errorMessage = error.message || "Network error";
+        setError(errorMessage);
         config.onError?.({ code: "NETWORK_ERROR", message: errorMessage });
         if (config.errorMessagesEnabled !== false) {
           showError(errorMessage);
@@ -309,6 +317,7 @@ export function AuthProvider({
     session,
     isLoading,
     isAuthenticated: !!user,
+    error,
     signIn,
     signUp,
     signOut,
