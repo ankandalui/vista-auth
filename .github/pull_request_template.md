@@ -1,7 +1,9 @@
 ## Description
+
 <!-- Describe your changes in detail -->
 
 ## Type of Change
+
 <!-- Mark the relevant option with an "x" -->
 
 - [ ] 🐛 Bug fix (non-breaking change which fixes an issue)
@@ -16,13 +18,17 @@
 - [ ] 🔒 Security fix
 
 ## Related Issue
+
 <!-- Link to the issue this PR addresses -->
+
 Closes #(issue number)
 
 ## Motivation and Context
+
 <!-- Why is this change required? What problem does it solve? -->
 
 ## How Has This Been Tested?
+
 <!-- Describe the tests you ran to verify your changes -->
 <!-- Include details of your test configuration -->
 
@@ -32,14 +38,17 @@ Closes #(issue number)
 - [ ] Tested with multiple frameworks (specify which ones)
 
 **Test Configuration:**
+
 - Node version:
 - Framework version:
 - Database (if applicable):
 
 ## Screenshots / Videos
+
 <!-- If applicable, add screenshots or videos to help explain your changes -->
 
 ## Code Quality Checklist
+
 <!-- Mark completed items with an "x" -->
 
 - [ ] My code follows the style guidelines of this project
@@ -52,6 +61,7 @@ Closes #(issue number)
 - [ ] Any dependent changes have been merged and published
 
 ## Documentation
+
 <!-- Mark completed items with an "x" -->
 
 - [ ] README.md updated (if needed)
@@ -61,11 +71,13 @@ Closes #(issue number)
 - [ ] Inline code comments added (if needed)
 
 ## Breaking Changes
+
 <!-- If this is a breaking change, describe the impact and migration path -->
 
 **What breaks:**
 
 **Migration guide:**
+
 ```typescript
 // Before (old way)
 
@@ -73,9 +85,11 @@ Closes #(issue number)
 ```
 
 ## Additional Notes
+
 <!-- Add any additional notes or context here -->
 
 ## Checklist for Maintainers
+
 <!-- For maintainers to check before merging -->
 
 - [ ] Code reviewed

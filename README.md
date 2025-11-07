@@ -107,10 +107,23 @@ export default function App({ Component, pageProps }: AppProps) {
 }
 ```
 
-**Vite/CRA:**
+**Vite:**
 
 ```tsx
-// src/main.tsx or src/index.tsx
+// src/main.tsx
+import { AuthProvider } from "vista-auth/client";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <AuthProvider apiEndpoint="http://localhost:5173/api/auth">
+    <App />
+  </AuthProvider>
+);
+```
+
+**Create React App (CRA):**
+
+```tsx
+// src/index.tsx
 import { AuthProvider } from "vista-auth/client";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

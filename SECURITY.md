@@ -16,6 +16,7 @@ We release patches for security vulnerabilities in the following versions:
 Instead, please report them via email to [ankandalui25@gmail.com](mailto:ankandalui25@gmail.com).
 
 Include the following information:
+
 - Type of vulnerability
 - Full paths of source file(s) related to the vulnerability
 - Location of the affected source code (tag/branch/commit or direct URL)
@@ -35,6 +36,7 @@ Include the following information:
 When using Vista Auth, follow these security best practices:
 
 ### 1. JWT Secret
+
 - Use a strong, randomly generated secret (at least 32 characters)
 - Store it in environment variables, never in code
 - Rotate secrets periodically
@@ -45,44 +47,50 @@ openssl rand -base64 32
 ```
 
 ### 2. Password Security
+
 - Use bcrypt rounds ≥ 10 (default is 10, increase for higher security)
 - Enforce password strength requirements in your application
 - Implement rate limiting on authentication endpoints
 
 ### 3. Session Management
+
 - Set appropriate session duration (default is 7 days)
 - Implement session cleanup for expired sessions
 - Consider using IndexedDB for sensitive session data
 
 ### 4. HTTPS
+
 - Always use HTTPS in production
 - Set secure cookie flags when using cookies
 - Enable HSTS headers
 
 ### 5. Database Security
+
 - Use parameterized queries (all adapters do this by default)
 - Regularly update database credentials
 - Enable database encryption at rest
 
 ### 6. Rate Limiting
+
 Implement rate limiting on authentication endpoints:
 
 ```typescript
 // Example with Express
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 requests per window
-  message: 'Too many authentication attempts, please try again later',
+  message: "Too many authentication attempts, please try again later",
 });
 
-app.post('/api/auth', authLimiter, async (req, res) => {
+app.post("/api/auth", authLimiter, async (req, res) => {
   // Your auth logic
 });
 ```
 
 ### 7. Input Validation
+
 Always validate and sanitize user input:
 
 ```typescript
@@ -97,17 +105,21 @@ function validatePassword(password: string): boolean {
 ```
 
 ### 8. CORS Configuration
+
 Configure CORS properly:
 
 ```typescript
 // Example with Express
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(','),
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(","),
+    credentials: true,
+  })
+);
 ```
 
 ### 9. Environment Variables
+
 Required environment variables:
 
 ```env
@@ -121,6 +133,7 @@ ALLOWED_ORIGINS=https://yourdomain.com
 ```
 
 ### 10. Regular Updates
+
 - Keep Vista Auth updated to the latest version
 - Monitor security advisories
 - Update dependencies regularly
@@ -128,16 +141,19 @@ ALLOWED_ORIGINS=https://yourdomain.com
 ## Known Security Considerations
 
 ### JWT Tokens
+
 - JWTs are signed, not encrypted. Don't store sensitive data in tokens.
 - Token expiration is enforced. Ensure proper session management.
 - Tokens are stateless. For revocation, maintain a session blacklist.
 
 ### Password Hashing
+
 - Uses bcrypt with configurable rounds (default: 10)
 - Passwords are never stored in plain text
 - Timing-safe comparison is used
 
 ### Session Storage
+
 - Client-side storage (localStorage, sessionStorage) is vulnerable to XSS
 - Use IndexedDB for sensitive data
 - Consider server-side session storage for critical applications

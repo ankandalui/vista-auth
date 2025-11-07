@@ -18,18 +18,21 @@ We offer multiple ways to contribute based on your skills and interests:
 ### 1. Code Contributions
 
 **Beginner-Friendly:**
+
 - Fix typos in documentation
 - Add code comments
 - Write example implementations
 - Improve error messages
 
 **Intermediate:**
+
 - Add database adapters
 - Implement framework integrations
 - Write unit tests
 - Performance optimizations
 
 **Advanced:**
+
 - Architecture improvements
 - Security enhancements
 - Core feature development
@@ -71,22 +74,26 @@ We offer multiple ways to contribute based on your skills and interests:
 ### Contributor Levels
 
 #### 🌱 **Seedling** (1-5 contributions)
+
 - Name in README contributors section
 - Digital contributor badge
 - Discord role (when available)
 
 #### 🌿 **Sprout** (6-15 contributions)
+
 - All Seedling benefits
 - Featured in release notes
 - Vista Auth sticker pack (coming soon)
 
 #### 🌳 **Tree** (16-30 contributions)
+
 - All Sprout benefits
 - Vista Auth t-shirt (coming soon)
 - Priority support for your issues
 - Early access to new features
 
 #### 🌲 **Forest Guardian** (31+ contributions or major feature)
+
 - All Tree benefits
 - Vista Auth hoodie (coming soon)
 - Co-maintainer consideration
@@ -110,6 +117,7 @@ We offer multiple ways to contribute based on your skills and interests:
 Each month we'll highlight specific areas needing contributions:
 
 **Example Monthly Themes:**
+
 - **January:** "Test Coverage Month" - Focus on writing tests
 - **February:** "Documentation February" - Improve docs
 - **March:** "Security March" - Security audits and improvements
@@ -178,12 +186,14 @@ Contributing to Vista Auth helps you learn:
 ### Ongoing Needs
 
 - **Database Adapters:**
+
   - [ ] DynamoDB adapter
   - [ ] Redis adapter
   - [ ] Cassandra adapter
   - [ ] Neo4j adapter
 
 - **Framework Integrations:**
+
   - [ ] Angular integration
   - [ ] Svelte integration
   - [ ] Vue integration
@@ -191,6 +201,7 @@ Contributing to Vista Auth helps you learn:
   - [ ] Astro integration
 
 - **Features:**
+
   - [ ] OAuth providers (Google, GitHub, etc.)
   - [ ] Two-factor authentication
   - [ ] Passwordless authentication
@@ -200,6 +211,7 @@ Contributing to Vista Auth helps you learn:
   - [ ] Session management UI
 
 - **Documentation:**
+
   - [ ] Video tutorials
   - [ ] Interactive playground
   - [ ] Migration guides
@@ -228,6 +240,7 @@ Contributing to Vista Auth helps you learn:
 ### Step 2: Find an Issue
 
 Look for issues labeled:
+
 - `good first issue` - Perfect for beginners
 - `help wanted` - Need assistance
 - `up for grabs` - Available for anyone
@@ -239,6 +252,7 @@ Comment on the issue saying you'd like to work on it. We'll assign it to you and
 ### Step 4: Make Your Contribution
 
 Follow the [Contributing Guide](CONTRIBUTING.md) to:
+
 1. Fork the repository
 2. Create a branch
 3. Make your changes
@@ -253,6 +267,7 @@ Maintainers will review your PR and provide feedback. Don't worry if changes are
 ## 💡 Tips for Success
 
 ### DO:
+
 ✅ Read the documentation first
 ✅ Ask questions early
 ✅ Start small and build confidence
@@ -263,6 +278,7 @@ Maintainers will review your PR and provide feedback. Don't worry if changes are
 ✅ Learn from feedback
 
 ### DON'T:
+
 ❌ Work on issues assigned to others
 ❌ Submit PRs without discussing first
 ❌ Make unrelated changes in one PR
@@ -275,11 +291,13 @@ Maintainers will review your PR and provide feedback. Don't worry if changes are
 ## 📞 Get Help
 
 ### Questions?
+
 - **GitHub Discussions:** General questions and discussions
 - **GitHub Issues:** Bug reports and feature requests
 - **Email:** ankandalui25@gmail.com
 
 ### Need Guidance?
+
 - Comment on the issue you're working on
 - Ask in the PR if you're stuck
 - Request a mentor for complex features
@@ -308,27 +326,33 @@ Track the project's growth and your contributions:
 ## 🌟 Recognition Wall
 
 ### Hall of Fame
-*Coming soon - Featured contributors who've made exceptional impact*
+
+_Coming soon - Featured contributors who've made exceptional impact_
 
 ### Recent Contributors
-*Automatically updated via All Contributors bot*
+
+_Automatically updated via All Contributors bot_
 
 ---
 
 ## 📜 Program Policies
 
 ### Eligibility
+
 - Anyone can contribute, regardless of experience level
 - Students, professionals, and hobbyists welcome
 - No geographical restrictions
 
 ### Code of Conduct
+
 All contributors must follow our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ### License
+
 All contributions are licensed under MIT License
 
 ### Intellectual Property
+
 - Contributors retain copyright of their contributions
 - By contributing, you grant Vista Auth permission to use your contribution
 - Significant contributors will be acknowledged
@@ -338,6 +362,7 @@ All contributions are licensed under MIT License
 ## 🚀 Future Plans
 
 ### Upcoming Features
+
 - Discord community server
 - Video tutorial series
 - Interactive documentation
@@ -346,6 +371,7 @@ All contributions are licensed under MIT License
 - Bounty program for critical features
 
 ### Growth Goals
+
 - Reach 100 contributors by end of 2026
 - Support 10+ database adapters
 - Integration with 10+ frameworks
@@ -362,6 +388,6 @@ Every contribution, no matter how small, makes Vista Auth better. We're grateful
 
 ---
 
-*This program is continuously evolving. Suggestions for improvement are always welcome!*
+_This program is continuously evolving. Suggestions for improvement are always welcome!_
 
 **Last Updated:** November 7, 2025

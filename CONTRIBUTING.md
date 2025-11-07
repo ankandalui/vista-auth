@@ -30,6 +30,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 Before creating bug reports, please check the [existing issues](https://github.com/ankandalui/vista-auth/issues) to avoid duplicates.
 
 **When filing a bug report, include:**
+
 - A clear and descriptive title
 - Steps to reproduce the issue
 - Expected behavior vs actual behavior
@@ -38,6 +39,7 @@ Before creating bug reports, please check the [existing issues](https://github.c
 - Code samples or error messages
 
 **Example Bug Report:**
+
 ```markdown
 **Title:** JWT token verification fails with custom secret
 
@@ -45,6 +47,7 @@ Before creating bug reports, please check the [existing issues](https://github.c
 When using a custom JWT secret longer than 64 characters, token verification throws an error.
 
 **Steps to Reproduce:**
+
 1. Set `VISTA_AUTH_SECRET` to a 128-character string
 2. Create a user with `signUp()`
 3. Try to verify the token with `getSession()`
@@ -53,6 +56,7 @@ When using a custom JWT secret longer than 64 characters, token verification thr
 **Actual:** Throws "invalid signature" error
 
 **Environment:**
+
 - Node: v20.0.0
 - Next.js: 14.0.0
 - vista-auth: 1.0.1
@@ -63,6 +67,7 @@ When using a custom JWT secret longer than 64 characters, token verification thr
 Enhancement suggestions are tracked as [GitHub issues](https://github.com/ankandalui/vista-auth/issues).
 
 **When suggesting an enhancement, include:**
+
 - A clear and descriptive title
 - Detailed description of the proposed feature
 - Why this enhancement would be useful
@@ -72,6 +77,7 @@ Enhancement suggestions are tracked as [GitHub issues](https://github.com/ankand
 ### First-Time Contributors
 
 Look for issues labeled with:
+
 - `good first issue` - Good for newcomers
 - `help wanted` - Extra attention needed
 - `documentation` - Documentation improvements
@@ -80,24 +86,28 @@ Look for issues labeled with:
 ### Areas to Contribute
 
 1. **Core Features**
+
    - Database adapters for new databases
    - Framework integrations (Angular, Svelte, etc.)
    - Performance optimizations
    - Security improvements
 
 2. **Documentation**
+
    - Fix typos or unclear explanations
    - Add more examples
    - Create video tutorials
    - Translate to other languages
 
 3. **Testing**
+
    - Write unit tests
    - Write integration tests
    - Test with different frameworks
    - Performance benchmarks
 
 4. **UI/UX**
+
    - Improve toast notifications
    - Add more UI helpers
    - Create example templates
@@ -137,24 +147,28 @@ Look for issues labeled with:
 ## 💻 Development Setup
 
 1. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 2. **Build the project:**
+
    ```bash
    npm run build
    ```
 
 3. **Run in development mode:**
+
    ```bash
    npm run dev
    ```
 
 4. **Link locally for testing:**
+
    ```bash
    npm link
-   
+
    # In your test project
    npm link vista-auth
    ```
@@ -196,6 +210,7 @@ vista-auth/
 ### Branch Naming
 
 Use descriptive branch names:
+
 - `feature/add-redis-adapter`
 - `fix/jwt-expiration-bug`
 - `docs/improve-quickstart`
@@ -233,6 +248,7 @@ chore:    Changes to build process or auxiliary tools
 ```
 
 **Examples:**
+
 ```bash
 git commit -m "feat(database): add Redis adapter"
 git commit -m "fix(jwt): handle token expiration correctly"
@@ -247,12 +263,14 @@ git commit -m "test(auth): add unit tests for signIn"
 ### Good Commits
 
 ✅ **DO:**
+
 - Write clear, concise commit messages
 - Keep commits focused on a single change
 - Reference issue numbers when applicable
 - Test your changes before committing
 
 **Example:**
+
 ```bash
 feat(middleware): add support for Fastify
 
@@ -265,6 +283,7 @@ Closes #42
 ```
 
 ❌ **DON'T:**
+
 - Make commits with vague messages like "fix stuff" or "update"
 - Mix multiple unrelated changes in one commit
 - Commit commented-out code or debug logs
@@ -277,17 +296,20 @@ Closes #42
 ### Before Submitting
 
 1. **Update your branch:**
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. **Run tests:**
+
    ```bash
    npm test
    ```
 
 3. **Build successfully:**
+
    ```bash
    npm run build
    ```
@@ -302,6 +324,7 @@ Closes #42
 ### Creating a Pull Request
 
 1. **Push to your fork:**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -312,21 +335,26 @@ Closes #42
 
 ```markdown
 ## Description
+
 Brief description of what this PR does
 
 ## Type of Change
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 
 ## Related Issue
+
 Closes #(issue number)
 
 ## How Has This Been Tested?
+
 Describe the tests you ran
 
 ## Checklist
+
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
@@ -346,6 +374,7 @@ Describe the tests you ran
 ### After Your PR is Merged
 
 1. **Delete your branch:**
+
    ```bash
    git branch -d feature/your-feature-name
    git push origin --delete feature/your-feature-name
@@ -370,6 +399,7 @@ Describe the tests you ran
 - Use interfaces for objects, types for unions
 
 **Example:**
+
 ```typescript
 // Good ✅
 interface User {
@@ -397,31 +427,32 @@ async function getUser(id: any): Promise<any> {
 - Keep functions small and focused
 
 **Example:**
+
 ```typescript
 // Good ✅
 async function signIn(credentials: Credentials): Promise<AuthResult> {
   const user = await findUser(credentials.email);
-  
+
   if (!user) {
-    throw new Error('User not found');
+    throw new Error("User not found");
   }
-  
+
   const isValid = await verifyPassword(credentials.password, user.passwordHash);
-  
+
   if (!isValid) {
-    throw new Error('Invalid password');
+    throw new Error("Invalid password");
   }
-  
+
   return createSession(user);
 }
 
 // Bad ❌
 async function signIn(creds: any) {
-  const u = await findUser(creds.email)
-  if(!u) throw new Error('User not found')
-  const v = await verifyPassword(creds.password, u.passwordHash)
-  if(!v) throw new Error('Invalid password')
-  return createSession(u)
+  const u = await findUser(creds.email);
+  if (!u) throw new Error("User not found");
+  const v = await verifyPassword(creds.password, u.passwordHash);
+  if (!v) throw new Error("Invalid password");
+  return createSession(u);
 }
 ```
 
@@ -433,6 +464,7 @@ async function signIn(creds: any) {
 - Use meaningful component and prop names
 
 **Example:**
+
 ```tsx
 // Good ✅
 interface LoginFormProps {
@@ -441,32 +473,28 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({ email, password });
   };
-  
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* form fields */}
-    </form>
-  );
+
+  return <form onSubmit={handleSubmit}>{/* form fields */}</form>;
 }
 ```
 
 ### Documentation in Code
 
-```typescript
+````typescript
 /**
  * Signs in a user with email and password
- * 
+ *
  * @param credentials - User email and password
  * @returns Promise resolving to auth result with user and session
  * @throws Error if credentials are invalid
- * 
+ *
  * @example
  * ```typescript
  * const result = await auth.signIn({
@@ -478,7 +506,7 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
 async function signIn(credentials: Credentials): Promise<AuthResult> {
   // implementation
 }
-```
+````
 
 ---
 
@@ -489,39 +517,40 @@ async function signIn(credentials: Credentials): Promise<AuthResult> {
 We use Jest for testing. Tests should be placed in `__tests__` directories or named `*.test.ts`.
 
 **Example Test:**
+
 ```typescript
 // src/server/__tests__/core.test.ts
-import { createVistaAuth } from '../core';
+import { createVistaAuth } from "../core";
 
-describe('VistaAuth', () => {
+describe("VistaAuth", () => {
   let auth: ReturnType<typeof createVistaAuth>;
-  
+
   beforeEach(() => {
     auth = createVistaAuth({
-      jwtSecret: 'test-secret',
+      jwtSecret: "test-secret",
       database: null,
     });
   });
-  
-  describe('signUp', () => {
-    it('should create a new user', async () => {
+
+  describe("signUp", () => {
+    it("should create a new user", async () => {
       const result = await auth.signUp({
-        email: 'test@example.com',
-        password: 'password123',
-        name: 'Test User',
+        email: "test@example.com",
+        password: "password123",
+        name: "Test User",
       });
-      
+
       expect(result.success).toBe(true);
-      expect(result.user?.email).toBe('test@example.com');
+      expect(result.user?.email).toBe("test@example.com");
     });
-    
-    it('should hash the password', async () => {
+
+    it("should hash the password", async () => {
       const result = await auth.signUp({
-        email: 'test@example.com',
-        password: 'password123',
+        email: "test@example.com",
+        password: "password123",
       });
-      
-      expect(result.user?.passwordHash).not.toBe('password123');
+
+      expect(result.user?.passwordHash).not.toBe("password123");
     });
   });
 });
@@ -600,4 +629,4 @@ Your contributions make Vista Auth better for everyone. Whether you're fixing a 
 
 ---
 
-*This contributing guide is adapted from open-source best practices and the [Contributor Covenant](https://www.contributor-covenant.org/).*
+_This contributing guide is adapted from open-source best practices and the [Contributor Covenant](https://www.contributor-covenant.org/)._

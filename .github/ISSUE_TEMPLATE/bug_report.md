@@ -1,28 +1,34 @@
 ---
 name: Bug Report
 about: Report a bug to help us improve Vista Auth
-title: '[BUG] '
+title: "[BUG] "
 labels: bug
-assignees: ''
+assignees: ""
 ---
 
 ## Bug Description
+
 A clear and concise description of what the bug is.
 
 ## Steps to Reproduce
+
 Steps to reproduce the behavior:
+
 1. Install vista-auth version '...'
 2. Configure with '...'
 3. Run '...'
 4. See error
 
 ## Expected Behavior
+
 A clear and concise description of what you expected to happen.
 
 ## Actual Behavior
+
 A clear and concise description of what actually happened.
 
 ## Code Sample
+
 ```typescript
 // Minimal code to reproduce the issue
 const auth = createVistaAuth({
@@ -33,11 +39,13 @@ const auth = createVistaAuth({
 ```
 
 ## Error Message
+
 ```
 Paste the full error message here
 ```
 
 ## Environment
+
 - **OS:** [e.g., Windows 11, macOS 14, Ubuntu 22.04]
 - **Node Version:** [e.g., 20.0.0]
 - **Package Manager:** [e.g., npm 10.0.0, yarn 1.22.0, pnpm 8.0.0]
@@ -46,7 +54,9 @@ Paste the full error message here
 - **Database:** [e.g., Prisma with PostgreSQL, MongoDB]
 
 ## Additional Context
+
 Add any other context about the problem here. Screenshots, logs, or related issues are helpful.
 
 ## Possible Solution
+
 If you have an idea of how to fix the bug, please describe it here.
