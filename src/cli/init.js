@@ -7,7 +7,436 @@
 
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 const { prompts } = require("./prompts");
+
+// Package installation helper
+const installPackages = (packages, dev = false) => {
+  const flag = dev ? "--save-dev" : "--save";
+  const command = `npm install ${flag} ${packages.join(" ")}`;
+
+  console.log(`\n📦 Installing packages: ${packages.join(", ")}`);
+  console.log(`Running: ${command}`);
+
+  try {
+    execSync(command, { stdio: "inherit" });
+    console.log("✅ Packages installed successfully!");
+  } catch (error) {
+    console.error("❌ Failed to install packages:", error.message);
+    console.log("You can install them manually later:");
+    console.log(`npm install ${flag} ${packages.join(" ")}`);
+  }
+};
+
+// Database package mappings
+const DATABASE_PACKAGES = {
+  prisma: {
+    packages: ["@prisma/client"],
+    devPackages: ["prisma"],
+  },
+  mongodb: {
+    packages: ["mongodb"],
+    devPackages: [],
+  },
+  supabase: {
+    packages: ["@supabase/supabase-js"],
+    devPackages: [],
+  },
+  postgres: {
+    packages: ["pg"],
+    devPackages: ["@types/pg"],
+  },
+  firebase: {
+    packages: ["firebase-admin"],
+    devPackages: [],
+  },
+};
+
+// Schema generation functions
+const generatePrismaSchema = () => {
+  const schema = `// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Change to "mysql", "sqlite", etc. as needed
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  roles       String[]
+  permissions String[]
+  metadata    Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  sessions Session[]
+  
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  expiresAt    DateTime
+  data         Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+`;
+
+  const envExample = `# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/mydb?schema=public"
+
+# Vista Auth
+VISTA_AUTH_SECRET="your-super-secure-secret-key"
+`;
+
+  // Create prisma directory
+  if (!fs.existsSync("prisma")) {
+    fs.mkdirSync("prisma");
+  }
+
+  fs.writeFileSync("prisma/schema.prisma", schema);
+  fs.writeFileSync(".env.example", envExample);
+
+  console.log("✅ Generated Prisma schema with User and Session models");
+  console.log("✅ Generated .env.example with database configuration");
+  console.log("\n📝 Next steps:");
+  console.log("1. Copy .env.example to .env and update DATABASE_URL");
+  console.log("2. Run: npx prisma migrate dev --name init");
+  console.log("3. Run: npx prisma generate");
+};
+
+const generateMongoDBSetup = () => {
+  const connectionFile = `/**
+ * MongoDB Connection Setup for Vista Auth
+ */
+import { MongoClient } from 'mongodb';
+
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+const dbName = process.env.MONGODB_DB_NAME || 'vista-auth';
+
+let client: MongoClient;
+let db: any;
+
+export async function connectMongoDB() {
+  if (!client) {
+    client = new MongoClient(uri);
+    await client.connect();
+    db = client.db(dbName);
+    
+    // Create indexes for better performance
+    await createIndexes();
+    
+    console.log('✅ Connected to MongoDB');
+  }
+  return db;
+}
+
+async function createIndexes() {
+  // Users collection indexes
+  await db.collection('users').createIndex({ email: 1 }, { unique: true });
+  await db.collection('users').createIndex({ 'roles': 1 });
+  
+  // Sessions collection indexes  
+  await db.collection('sessions').createIndex({ userId: 1 });
+  await db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  
+  console.log('✅ Created MongoDB indexes');
+}
+
+export async function closeMongoDB() {
+  if (client) {
+    await client.close();
+  }
+}
+
+export { db };
+`;
+
+  const envExample = `# MongoDB
+MONGODB_URI="mongodb://localhost:27017"
+MONGODB_DB_NAME="vista-auth"
+
+# Vista Auth
+VISTA_AUTH_SECRET="your-super-secure-secret-key"
+`;
+
+  fs.writeFileSync("mongodb-setup.ts", connectionFile);
+  fs.writeFileSync(".env.example", envExample);
+
+  console.log("✅ Generated MongoDB connection setup with indexes");
+  console.log("✅ Generated .env.example with MongoDB configuration");
+  console.log("\n📝 Next steps:");
+  console.log("1. Copy .env.example to .env and update MONGODB_URI");
+  console.log("2. Import and call connectMongoDB() in your app");
+};
+
+const generateSupabaseSetup = () => {
+  const clientFile = `/**
+ * Supabase Client Setup for Vista Auth
+ */
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+export const supabase = createClient(supabaseUrl, supabaseKey);
+`;
+
+  const sqlSchema = `-- Vista Auth Schema for Supabase
+-- Run this in your Supabase SQL Editor
+
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Users table
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE NOT NULL,
+  name TEXT,
+  roles TEXT[] DEFAULT ARRAY['user'],
+  permissions TEXT[] DEFAULT ARRAY[]::TEXT[],
+  metadata JSONB DEFAULT '{}',
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Sessions table
+CREATE TABLE sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  data JSONB DEFAULT '{}',
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX users_email_idx ON users(email);
+CREATE INDEX users_roles_idx ON users USING GIN(roles);
+CREATE INDEX sessions_user_id_idx ON sessions(user_id);
+CREATE INDEX sessions_expires_at_idx ON sessions(expires_at);
+
+-- Row Level Security (RLS) Policies
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+
+-- Users can only see their own data
+CREATE POLICY "Users can view own profile" ON users
+  FOR SELECT USING (auth.uid()::text = id::text);
+
+CREATE POLICY "Users can update own profile" ON users
+  FOR UPDATE USING (auth.uid()::text = id::text);
+
+-- Sessions policies
+CREATE POLICY "Users can view own sessions" ON sessions
+  FOR SELECT USING (auth.uid()::text = user_id::text);
+
+CREATE POLICY "Users can delete own sessions" ON sessions
+  FOR DELETE USING (auth.uid()::text = user_id::text);
+`;
+
+  const envExample = `# Supabase
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
+
+# Vista Auth
+VISTA_AUTH_SECRET="your-super-secure-secret-key"
+`;
+
+  fs.writeFileSync("supabase-client.ts", clientFile);
+  fs.writeFileSync("supabase-schema.sql", sqlSchema);
+  fs.writeFileSync(".env.example", envExample);
+
+  console.log("✅ Generated Supabase client setup");
+  console.log("✅ Generated SQL schema with RLS policies");
+  console.log("✅ Generated .env.example with Supabase configuration");
+  console.log("\n📝 Next steps:");
+  console.log("1. Copy .env.example to .env and update Supabase credentials");
+  console.log("2. Run the SQL schema in your Supabase SQL Editor");
+  console.log("3. Import and use the supabase client in your app");
+};
+
+const generatePostgresSetup = () => {
+  const connectionFile = `/**
+ * PostgreSQL Connection Setup for Vista Auth
+ */
+import { Pool } from 'pg';
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
+
+export async function query(text: string, params?: any[]) {
+  const start = Date.now();
+  const res = await pool.query(text, params);
+  const duration = Date.now() - start;
+  console.log('Executed query', { text, duration, rows: res.rowCount });
+  return res;
+}
+
+// Initialize database tables
+export async function initializeDatabase() {
+  try {
+    // Create users table
+    await query(\`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255),
+        roles TEXT[] DEFAULT ARRAY['user'],
+        permissions TEXT[] DEFAULT ARRAY[]::TEXT[],
+        metadata JSONB DEFAULT '{}',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    \`);
+
+    // Create sessions table
+    await query(\`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        data JSONB DEFAULT '{}',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    \`);
+
+    // Create indexes
+    await query('CREATE INDEX IF NOT EXISTS users_email_idx ON users(email)');
+    await query('CREATE INDEX IF NOT EXISTS users_roles_idx ON users USING GIN(roles)');
+    await query('CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id)');
+    await query('CREATE INDEX IF NOT EXISTS sessions_expires_at_idx ON sessions(expires_at)');
+
+    console.log('✅ Database initialized successfully');
+  } catch (error) {
+    console.error('❌ Error initializing database:', error);
+    throw error;
+  }
+}
+
+export { pool };
+`;
+
+  const envExample = `# PostgreSQL
+DATABASE_URL="postgresql://username:password@localhost:5432/vista_auth"
+
+# Vista Auth
+VISTA_AUTH_SECRET="your-super-secure-secret-key"
+`;
+
+  fs.writeFileSync("postgres-setup.ts", connectionFile);
+  fs.writeFileSync(".env.example", envExample);
+
+  console.log("✅ Generated PostgreSQL connection setup");
+  console.log("✅ Generated .env.example with PostgreSQL configuration");
+  console.log("\n📝 Next steps:");
+  console.log("1. Copy .env.example to .env and update DATABASE_URL");
+  console.log("2. Import and call initializeDatabase() in your app");
+  console.log("3. Use the query function for database operations");
+};
+
+const generateFirebaseSetup = () => {
+  const configFile = `/**
+ * Firebase Configuration for Vista Auth
+ */
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firestore
+export const db = getFirestore(app);
+
+// Initialize Auth
+export const auth = getAuth(app);
+
+export default app;
+`;
+
+  const rulesFile = `// Firestore Security Rules for Vista Auth
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users collection - users can only access their own document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Sessions collection - users can only access their own sessions
+    match /sessions/{sessionId} {
+      allow read, write: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Public read access for certain collections (customize as needed)
+    match /public/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+`;
+
+  const envExample = `# Firebase
+NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-project.appspot.com"
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
+NEXT_PUBLIC_FIREBASE_APP_ID="your-app-id"
+
+# Vista Auth
+VISTA_AUTH_SECRET="your-super-secure-secret-key"
+`;
+
+  fs.writeFileSync("firebase-config.ts", configFile);
+  fs.writeFileSync("firestore.rules", rulesFile);
+  fs.writeFileSync(".env.example", envExample);
+
+  console.log("✅ Generated Firebase configuration");
+  console.log("✅ Generated Firestore security rules");
+  console.log("✅ Generated .env.example with Firebase configuration");
+  console.log("\n📝 Next steps:");
+  console.log("1. Copy .env.example to .env and update Firebase credentials");
+  console.log(
+    "2. Deploy Firestore rules: firebase deploy --only firestore:rules"
+  );
+  console.log("3. Import and use Firebase services in your app");
+};
 
 async function init() {
   console.log("🔐 Vista Auth Setup\n");
@@ -61,7 +490,49 @@ async function init() {
     },
   ]);
 
-  console.log("\n📦 Creating files...\n");
+  // Install database packages and generate schemas
+  if (answers.database && answers.database !== "none") {
+    console.log(`\n🔧 Setting up ${answers.database.toUpperCase()}...`);
+
+    try {
+      // Install required packages
+      const packages = DATABASE_PACKAGES[answers.database];
+      if (packages && packages.length > 0) {
+        console.log(`📦 Installing packages: ${packages.join(", ")}`);
+        await installPackages(packages);
+      }
+
+      // Generate database schemas and config files
+      switch (answers.database) {
+        case "prisma":
+          generatePrismaSchema();
+          break;
+        case "mongodb":
+          generateMongoDBSetup();
+          break;
+        case "supabase":
+          generateSupabaseSetup();
+          break;
+        case "postgres":
+          generatePostgresSetup();
+          break;
+        case "firebase":
+          generateFirebaseSetup();
+          break;
+        default:
+          console.log(`✅ ${answers.database} packages installed successfully`);
+      }
+
+      console.log(`🎉 ${answers.database.toUpperCase()} setup completed!\n`);
+    } catch (error) {
+      console.error(`❌ Error setting up ${answers.database}:`, error.message);
+      console.log(
+        "⚠️  You can install packages manually and continue with file generation.\n"
+      );
+    }
+  }
+
+  console.log("📦 Creating files...\n");
 
   // Create config file
   createConfigFile(answers);
