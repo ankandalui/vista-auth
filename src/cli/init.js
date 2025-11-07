@@ -7,6 +7,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { execSync } = require("child_process");
 const { prompts } = require("./prompts");
 
@@ -28,6 +29,16 @@ const installPackages = (packages, dev = false) => {
   }
 };
 
+// Generate cryptographically secure secret
+const generateVistaAuthSecret = () => {
+  // Generate 64 bytes (512 bits) of random data and convert to base64
+  // This provides excellent entropy for JWT signing
+  const secret = crypto.randomBytes(64).toString("base64");
+  console.log("🔐 Generated secure VISTA_AUTH_SECRET:");
+  console.log(`VISTA_AUTH_SECRET="${secret}"`);
+  return secret;
+};
+
 // Database package mappings
 const DATABASE_PACKAGES = {
   prisma: {
@@ -35,25 +46,25 @@ const DATABASE_PACKAGES = {
     devPackages: ["prisma"],
   },
   mongodb: {
-    packages: ["mongodb"],
-    devPackages: [],
+    packages: ["mongodb", "mongoose"],
+    devPackages: ["@types/mongodb"],
   },
   supabase: {
     packages: ["@supabase/supabase-js"],
     devPackages: [],
   },
   postgres: {
-    packages: ["pg"],
-    devPackages: ["@types/pg"],
+    packages: ["pg", "sequelize"],
+    devPackages: ["@types/pg", "@types/sequelize"],
   },
   firebase: {
-    packages: ["firebase-admin"],
+    packages: ["firebase", "firebase-admin"],
     devPackages: [],
   },
 };
 
 // Schema generation functions
-const generatePrismaSchema = () => {
+const generatePrismaSchema = (secret, framework = "nextjs") => {
   const schema = `// This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -104,7 +115,7 @@ model Session {
 DATABASE_URL="postgresql://username:password@localhost:5432/mydb?schema=public"
 
 # Vista Auth
-VISTA_AUTH_SECRET="your-super-secure-secret-key"
+VISTA_AUTH_SECRET="${secret}"
 `;
 
   // Create prisma directory
@@ -112,22 +123,61 @@ VISTA_AUTH_SECRET="your-super-secure-secret-key"
     fs.mkdirSync("prisma");
   }
 
+  // Create Prisma client singleton (framework-aware)
+  const prismaClientFile = `import { PrismaClient } from '@prisma/client'
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined
+}
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: ['query'],
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+`;
+
+  // Create framework-specific directory structure
+  let libDir = "lib";
+  
+  // Framework-specific paths
+  if (framework === "nextjs") {
+    libDir = "lib"; // Next.js standard
+  } else if (framework === "remix") {
+    libDir = "app/lib"; // Remix standard
+  } else if (framework === "vite" || framework === "cra") {
+    libDir = "src/lib"; // Vite/CRA standard
+  } else if (framework === "express") {
+    libDir = "lib"; // Express standard
+  }
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(libDir)) {
+    fs.mkdirSync(libDir, { recursive: true });
+  }
+
   fs.writeFileSync("prisma/schema.prisma", schema);
+  fs.writeFileSync(`${libDir}/prisma.ts`, prismaClientFile);
   fs.writeFileSync(".env.example", envExample);
 
   console.log("✅ Generated Prisma schema with User and Session models");
+  console.log(`✅ Generated Prisma client singleton in ${libDir}/prisma.ts`);
   console.log("✅ Generated .env.example with database configuration");
   console.log("\n📝 Next steps:");
   console.log("1. Copy .env.example to .env and update DATABASE_URL");
   console.log("2. Run: npx prisma migrate dev --name init");
   console.log("3. Run: npx prisma generate");
+  console.log(`4. Import Prisma client: import { prisma } from './${libDir}/prisma'`);
 };
 
-const generateMongoDBSetup = () => {
+const generateMongoDBSetup = (secret, framework = "nextjs") => {
   const connectionFile = `/**
  * MongoDB Connection Setup for Vista Auth
  */
 import { MongoClient } from 'mongodb';
+import mongoose from 'mongoose';
 
 const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const dbName = process.env.MONGODB_DB_NAME || 'vista-auth';
@@ -135,6 +185,7 @@ const dbName = process.env.MONGODB_DB_NAME || 'vista-auth';
 let client: MongoClient;
 let db: any;
 
+// Native MongoDB Driver Setup
 export async function connectMongoDB() {
   if (!client) {
     client = new MongoClient(uri);
@@ -144,7 +195,7 @@ export async function connectMongoDB() {
     // Create indexes for better performance
     await createIndexes();
     
-    console.log('✅ Connected to MongoDB');
+    console.log('✅ Connected to MongoDB (Native Driver)');
   }
   return db;
 }
@@ -167,6 +218,46 @@ export async function closeMongoDB() {
   }
 }
 
+// Mongoose Setup (Alternative ORM approach)
+export async function connectMongoose() {
+  try {
+    await mongoose.connect(uri + '/' + dbName);
+    console.log('✅ Connected to MongoDB (Mongoose)');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    throw error;
+  }
+}
+
+// Mongoose User Schema
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  name: { type: String },
+  roles: [{ type: String, default: ['user'] }],
+  permissions: [{ type: String, default: [] }],
+  metadata: { type: Object, default: {} },
+}, { 
+  timestamps: true 
+});
+
+// Mongoose Session Schema
+const sessionSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+  data: { type: Object, default: {} },
+}, { 
+  timestamps: true 
+});
+
+// Create indexes
+userSchema.index({ email: 1 });
+userSchema.index({ roles: 1 });
+sessionSchema.index({ userId: 1 });
+sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+export const User = mongoose.model('User', userSchema);
+export const Session = mongoose.model('Session', sessionSchema);
+
 export { db };
 `;
 
@@ -175,20 +266,34 @@ MONGODB_URI="mongodb://localhost:27017"
 MONGODB_DB_NAME="vista-auth"
 
 # Vista Auth
-VISTA_AUTH_SECRET="your-super-secure-secret-key"
+VISTA_AUTH_SECRET="${secret}"
 `;
 
-  fs.writeFileSync("mongodb-setup.ts", connectionFile);
+  // Framework-specific directory
+  let libDir = "lib";
+  if (framework === "remix") libDir = "app/lib";
+  else if (framework === "vite" || framework === "cra") libDir = "src/lib";
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(libDir)) {
+    fs.mkdirSync(libDir, { recursive: true });
+  }
+
+  fs.writeFileSync(`${libDir}/mongodb-setup.ts`, connectionFile);
   fs.writeFileSync(".env.example", envExample);
 
-  console.log("✅ Generated MongoDB connection setup with indexes");
+  console.log("✅ Generated MongoDB connection setup with native driver and Mongoose");
+  console.log(`✅ Generated MongoDB setup in ${libDir}/mongodb-setup.ts`);
   console.log("✅ Generated .env.example with MongoDB configuration");
   console.log("\n📝 Next steps:");
   console.log("1. Copy .env.example to .env and update MONGODB_URI");
-  console.log("2. Import and call connectMongoDB() in your app");
+  console.log("2. Choose your approach:");
+  console.log("   • Native Driver: Import and call connectMongoDB()");
+  console.log("   • Mongoose ODM: Import and call connectMongoose()");
+  console.log(`3. Import: import { connectMongoDB } from './${libDir}/mongodb-setup'`);
 };
 
-const generateSupabaseSetup = () => {
+const generateSupabaseSetup = (secret, framework = "nextjs") => {
   const clientFile = `/**
  * Supabase Client Setup for Vista Auth
  */
@@ -259,10 +364,20 @@ NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
 
 # Vista Auth
-VISTA_AUTH_SECRET="your-super-secure-secret-key"
+VISTA_AUTH_SECRET="${secret}"
 `;
 
-  fs.writeFileSync("supabase-client.ts", clientFile);
+  // Framework-specific directory
+  let libDir = "lib";
+  if (framework === "remix") libDir = "app/lib";
+  else if (framework === "vite" || framework === "cra") libDir = "src/lib";
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(libDir)) {
+    fs.mkdirSync(libDir, { recursive: true });
+  }
+
+  fs.writeFileSync(`${libDir}/supabase-client.ts`, clientFile);
   fs.writeFileSync("supabase-schema.sql", sqlSchema);
   fs.writeFileSync(".env.example", envExample);
 
@@ -275,7 +390,7 @@ VISTA_AUTH_SECRET="your-super-secure-secret-key"
   console.log("3. Import and use the supabase client in your app");
 };
 
-const generatePostgresSetup = () => {
+const generatePostgresSetup = (secret, framework = "nextjs") => {
   const connectionFile = `/**
  * PostgreSQL Connection Setup for Vista Auth
  */
@@ -342,10 +457,20 @@ export { pool };
 DATABASE_URL="postgresql://username:password@localhost:5432/vista_auth"
 
 # Vista Auth
-VISTA_AUTH_SECRET="your-super-secure-secret-key"
+VISTA_AUTH_SECRET="${secret}"
 `;
 
-  fs.writeFileSync("postgres-setup.ts", connectionFile);
+  // Framework-specific directory
+  let libDir = "lib";
+  if (framework === "remix") libDir = "app/lib";
+  else if (framework === "vite" || framework === "cra") libDir = "src/lib";
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(libDir)) {
+    fs.mkdirSync(libDir, { recursive: true });
+  }
+
+  fs.writeFileSync(`${libDir}/postgres-setup.ts`, connectionFile);
   fs.writeFileSync(".env.example", envExample);
 
   console.log("✅ Generated PostgreSQL connection setup");
@@ -356,9 +481,9 @@ VISTA_AUTH_SECRET="your-super-secure-secret-key"
   console.log("3. Use the query function for database operations");
 };
 
-const generateFirebaseSetup = () => {
+const generateFirebaseSetup = (secret, framework = "nextjs") => {
   const configFile = `/**
- * Firebase Configuration for Vista Auth
+ * Firebase Configuration for Vista Auth (Client Side)
  */
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
@@ -373,7 +498,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
+// Initialize Firebase Client
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore
@@ -383,6 +508,64 @@ export const db = getFirestore(app);
 export const auth = getAuth(app);
 
 export default app;
+`;
+
+  const adminConfigFile = `/**
+ * Firebase Admin Configuration for Vista Auth (Server Side)
+ */
+import * as admin from 'firebase-admin';
+
+// Initialize Firebase Admin (Server Side)
+if (!admin.apps.length) {
+  const serviceAccount = {
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  };
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: \`https://\${process.env.FIREBASE_PROJECT_ID}.firebaseio.com\`
+  });
+}
+
+// Admin services
+export const adminAuth = admin.auth();
+export const adminDb = admin.firestore();
+
+// Helper functions for Vista Auth integration
+export async function verifyIdToken(idToken: string) {
+  try {
+    return await adminAuth.verifyIdToken(idToken);
+  } catch (error) {
+    console.error('Error verifying ID token:', error);
+    throw error;
+  }
+}
+
+export async function createUser(userData: any) {
+  try {
+    const userRecord = await adminAuth.createUser(userData);
+    
+    // Store additional user data in Firestore
+    await adminDb.collection('users').doc(userRecord.uid).set({
+      email: userData.email,
+      name: userData.displayName || userData.name,
+      roles: userData.roles || ['user'],
+      permissions: userData.permissions || [],
+      metadata: userData.metadata || {},
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    return userRecord;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+}
+
+export default admin;
 `;
 
   const rulesFile = `// Firestore Security Rules for Vista Auth
@@ -411,7 +594,7 @@ service cloud.firestore {
 }
 `;
 
-  const envExample = `# Firebase
+  const envExample = `# Firebase Client (Public)
 NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
 NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
@@ -419,23 +602,41 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-project.appspot.com"
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
 NEXT_PUBLIC_FIREBASE_APP_ID="your-app-id"
 
+# Firebase Admin (Private - Server Only)
+FIREBASE_PROJECT_ID="your-project-id"
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour-private-key\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com"
+
 # Vista Auth
-VISTA_AUTH_SECRET="your-super-secure-secret-key"
+VISTA_AUTH_SECRET="${secret}"
 `;
 
-  fs.writeFileSync("firebase-config.ts", configFile);
+  // Framework-specific directory
+  let libDir = "lib";
+  if (framework === "remix") libDir = "app/lib";
+  else if (framework === "vite" || framework === "cra") libDir = "src/lib";
+
+  // Create directory if it doesn't exist
+  if (!fs.existsSync(libDir)) {
+    fs.mkdirSync(libDir, { recursive: true });
+  }
+
+  fs.writeFileSync(`${libDir}/firebase-config.ts`, configFile);
+  fs.writeFileSync(`${libDir}/firebase-admin.ts`, adminConfigFile);
   fs.writeFileSync("firestore.rules", rulesFile);
   fs.writeFileSync(".env.example", envExample);
 
-  console.log("✅ Generated Firebase configuration");
+  console.log("✅ Generated Firebase client configuration");
+  console.log("✅ Generated Firebase admin configuration");
   console.log("✅ Generated Firestore security rules");
   console.log("✅ Generated .env.example with Firebase configuration");
   console.log("\n📝 Next steps:");
   console.log("1. Copy .env.example to .env and update Firebase credentials");
+  console.log("2. Download Firebase service account key and add to .env");
   console.log(
-    "2. Deploy Firestore rules: firebase deploy --only firestore:rules"
+    "3. Deploy Firestore rules: firebase deploy --only firestore:rules"
   );
-  console.log("3. Import and use Firebase services in your app");
+  console.log("4. Import and use Firebase services in your app");
 };
 
 async function init() {
@@ -490,39 +691,50 @@ async function init() {
     },
   ]);
 
+  // Generate secure secret for Vista Auth
+  const vistaAuthSecret = generateVistaAuthSecret();
+
   // Install database packages and generate schemas
   if (answers.database && answers.database !== "none") {
     console.log(`\n🔧 Setting up ${answers.database.toUpperCase()}...`);
 
     try {
       // Install required packages
-      const packages = DATABASE_PACKAGES[answers.database];
-      if (packages && packages.length > 0) {
-        console.log(`📦 Installing packages: ${packages.join(", ")}`);
-        await installPackages(packages);
+      const dbConfig = DATABASE_PACKAGES[answers.database];
+      if (dbConfig) {
+        // Install production packages
+        if (dbConfig.packages && dbConfig.packages.length > 0) {
+          console.log(`📦 Installing packages: ${dbConfig.packages.join(", ")}`);
+          await installPackages(dbConfig.packages, false);
+        }
+        
+        // Install dev packages
+        if (dbConfig.devPackages && dbConfig.devPackages.length > 0) {
+          console.log(`📦 Installing dev packages: ${dbConfig.devPackages.join(", ")}`);
+          await installPackages(dbConfig.devPackages, true);
+        }
       }
 
       // Generate database schemas and config files
       switch (answers.database) {
         case "prisma":
-          generatePrismaSchema();
+          generatePrismaSchema(vistaAuthSecret, answers.framework);
           break;
         case "mongodb":
-          generateMongoDBSetup();
+          generateMongoDBSetup(vistaAuthSecret, answers.framework);
           break;
         case "supabase":
-          generateSupabaseSetup();
+          generateSupabaseSetup(vistaAuthSecret, answers.framework);
           break;
         case "postgres":
-          generatePostgresSetup();
+          generatePostgresSetup(vistaAuthSecret, answers.framework);
           break;
         case "firebase":
-          generateFirebaseSetup();
+          generateFirebaseSetup(vistaAuthSecret, answers.framework);
           break;
         default:
           console.log(`✅ ${answers.database} packages installed successfully`);
       }
-
       console.log(`🎉 ${answers.database.toUpperCase()} setup completed!\n`);
     } catch (error) {
       console.error(`❌ Error setting up ${answers.database}:`, error.message);

@@ -1,6 +1,6 @@
 {
   "name": "vista-auth",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Simple, powerful, and secure authentication for React apps - works with any framework",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
