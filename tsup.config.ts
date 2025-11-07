@@ -9,6 +9,8 @@ export default defineConfig({
     "guards/index": "src/guards/index.tsx",
     "ui/index": "src/ui/index.ts",
     "database/index": "src/database/index.ts",
+    "cli/init": "src/cli/init.js",
+    "cli/prompts": "src/cli/prompts.js",
   },
   format: ["cjs", "esm"],
   dts: true,
