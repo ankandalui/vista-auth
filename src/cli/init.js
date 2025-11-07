@@ -87,9 +87,10 @@ async function init() {
     `   auth-utils/providers.${componentExt}    - Auth provider setup`
   );
   if (answers.framework === "nextjs") {
-    console.log(
-      `   app/api/auth/route.${routeExt}      - API routes (Next.js)`
-    );
+    console.log(`   app/api/auth/signup/route.${routeExt}  - Signup API`);
+    console.log(`   app/api/auth/signin/route.${routeExt}  - Signin API`);
+    console.log(`   app/api/auth/signout/route.${routeExt} - Signout API`);
+    console.log(`   app/api/auth/session/route.${routeExt} - Session API`);
   }
   console.log("   examples/                   - Example components");
   console.log("\n🚀 Next steps:");
@@ -107,19 +108,29 @@ function createConfigFile(answers) {
   const fileExt = isTypeScript ? "ts" : "js";
 
   // Handle database adapter import - skip for 'none'
-  const databaseImport = answers.database === 'none' 
-    ? '' 
-    : `import { create${capitalize(answers.database)}Adapter } from 'vista-auth/database';`;
+  const databaseImport =
+    answers.database === "none"
+      ? ""
+      : `import { create${capitalize(
+          answers.database
+        )}Adapter } from 'vista-auth/database';`;
 
-  const databaseConfig = answers.database === 'none'
-    ? '// database: null, // No database - using localStorage only'
-    : `// database: create${capitalize(answers.database)}Adapter(db),`;
+  const databaseConfig =
+    answers.database === "none"
+      ? "// database: null, // No database - using localStorage only"
+      : `  const databaseConfig = answers.database === 'none'
+    ? 'database: null, // No database - using localStorage only'
+    : `// database: create${capitalize(answers.database)}Adapter(db),`;${capitalize(answers.database)}Adapter(db),`;
 
   const config = `import { createVistaAuth } from 'vista-auth/server';
 ${databaseImport}
 
 // Configure your database
-${answers.database !== 'none' ? '// import { db } from \'./your-database-setup\';' : ''}
+${
+  answers.database !== "none"
+    ? "// import { db } from './your-database-setup';"
+    : ""
+}
 
 export const auth = createVistaAuth({
   // Database adapter
@@ -160,42 +171,120 @@ function createApiRoutes(answers) {
   if (answers.framework === "nextjs") {
     const isTypeScript = answers.language === "typescript";
     const fileExt = isTypeScript ? "ts" : "js";
+    const requestType = isTypeScript ? ": NextRequest" : "";
+    const imports = isTypeScript ? `import { NextRequest } from 'next/server';\n` : '';
 
-    const routeHandler = `import { auth } from '@/vista-auth.config';
+    // Create signup route
+    const signupRoute = `${imports}import { auth } from '@/vista-auth.config';
 
-export async function POST(request${isTypeScript ? ": Request" : ""}) {
-  const body = await request.json();
-  
-  if (request.url.includes('/signin')) {
-    const result = await auth.signIn(body);
-    return Response.json(result);
-  }
-  
-  if (request.url.includes('/signup')) {
+export async function POST(request${requestType}) {
+  try {
+    const body = await request.json();
+    console.log('[Vista Auth] Signup attempt:', body.email);
+    
     const result = await auth.signUp(body);
+    console.log('[Vista Auth] Signup result:', result.success);
+    
     return Response.json(result);
+  } catch (error) {
+    console.error('[Vista Auth] Signup error:', error);
+    return Response.json(
+      { success: false, error: 'Sign up failed' },
+      { status: 500 }
+    );
   }
-  
-  if (request.url.includes('/signout')) {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-    const payload = auth.verifyToken(token);
-    const result = await auth.signOut(payload.sessionId);
-    return Response.json(result);
-  }
-  
-  return Response.json({ error: 'Invalid endpoint' }, { status: 404 });
-}
-
-export async function GET(request${isTypeScript ? ": Request" : ""}) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-  const result = await auth.getSession(token);
-  return Response.json(result);
 }
 `;
 
-    fs.mkdirSync("app/api/auth", { recursive: true });
-    fs.writeFileSync(`app/api/auth/route.${fileExt}`, routeHandler);
-    console.log(`✓ Created app/api/auth/route.${fileExt}`);
+    // Create signin route
+    const signinRoute = `${imports}import { auth } from '@/vista-auth.config';
+
+export async function POST(request${requestType}) {
+  try {
+    const body = await request.json();
+    console.log('[Vista Auth] Signin attempt:', body.email);
+    
+    const result = await auth.signIn(body);
+    console.log('[Vista Auth] Signin result:', result.success);
+    
+    return Response.json(result);
+  } catch (error) {
+    console.error('[Vista Auth] Signin error:', error);
+    return Response.json(
+      { success: false, error: 'Sign in failed' },
+      { status: 500 }
+    );
+  }
+}
+`;
+
+    // Create signout route
+    const signoutRoute = `${imports}import { auth } from '@/vista-auth.config';
+
+export async function POST(request${requestType}) {
+  try {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    console.log('[Vista Auth] Signout attempt');
+    
+    if (token) {
+      const payload = auth.verifyToken(token);
+      const result = await auth.signOut(payload.sessionId);
+      console.log('[Vista Auth] Signout result:', result.success);
+      return Response.json(result);
+    }
+    
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error('[Vista Auth] Signout error:', error);
+    return Response.json(
+      { success: false, error: 'Sign out failed' },
+      { status: 500 }
+    );
+  }
+}
+`;
+
+    // Create session route
+    const sessionRoute = `${imports}import { auth } from '@/vista-auth.config';
+
+export async function GET(request${requestType}) {
+  try {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+    console.log('[Vista Auth] Session check');
+    
+    if (!token) {
+      return Response.json({ success: false, error: 'No token provided' });
+    }
+    
+    const result = await auth.getSession(token);
+    console.log('[Vista Auth] Session result:', result.success);
+    
+    return Response.json(result);
+  } catch (error) {
+    console.error('[Vista Auth] Session error:', error);
+    return Response.json(
+      { success: false, error: 'Session validation failed' },
+      { status: 500 }
+    );
+  }
+}
+`;
+
+    // Create directories and files
+    fs.mkdirSync("app/api/auth/signup", { recursive: true });
+    fs.mkdirSync("app/api/auth/signin", { recursive: true });
+    fs.mkdirSync("app/api/auth/signout", { recursive: true });
+    fs.mkdirSync("app/api/auth/session", { recursive: true });
+
+    fs.writeFileSync(`app/api/auth/signup/route.${fileExt}`, signupRoute);
+    fs.writeFileSync(`app/api/auth/signin/route.${fileExt}`, signinRoute);
+    fs.writeFileSync(`app/api/auth/signout/route.${fileExt}`, signoutRoute);
+    fs.writeFileSync(`app/api/auth/session/route.${fileExt}`, sessionRoute);
+
+    console.log(`✓ Created app/api/auth/signup/route.${fileExt}`);
+    console.log(`✓ Created app/api/auth/signin/route.${fileExt}`);
+    console.log(`✓ Created app/api/auth/signout/route.${fileExt}`);
+    console.log(`✓ Created app/api/auth/session/route.${fileExt}`);
   }
 }
 
