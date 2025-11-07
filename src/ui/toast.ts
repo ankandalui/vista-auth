@@ -3,7 +3,7 @@
  * Built-in toast notifications and error messages
  */
 
-export type ToastType = 'success' | 'error' | 'info' | 'warning';
+export type ToastType = "success" | "error" | "info" | "warning";
 
 interface Toast {
   id: string;
@@ -18,14 +18,14 @@ class ToastManager {
   private listeners: ((toasts: Toast[]) => void)[] = [];
 
   constructor() {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       this.createContainer();
     }
   }
 
   private createContainer(): void {
-    this.container = document.createElement('div');
-    this.container.id = 'vista-auth-toasts';
+    this.container = document.createElement("div");
+    this.container.id = "vista-auth-toasts";
     this.container.style.cssText = `
       position: fixed;
       top: 20px;
@@ -39,13 +39,17 @@ class ToastManager {
     document.body.appendChild(this.container);
   }
 
-  show(message: string, type: ToastType = 'info', duration: number = 3000): void {
+  show(
+    message: string,
+    type: ToastType = "info",
+    duration: number = 3000
+  ): void {
     const id = Math.random().toString(36).substring(7);
     const toast: Toast = { id, message, type, duration };
-    
+
     this.toasts.push(toast);
     this.render();
-    
+
     if (duration > 0) {
       setTimeout(() => {
         this.remove(id);
@@ -54,17 +58,17 @@ class ToastManager {
   }
 
   remove(id: string): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
+    this.toasts = this.toasts.filter((t) => t.id !== id);
     this.render();
   }
 
   private render(): void {
     if (!this.container) return;
 
-    this.container.innerHTML = '';
+    this.container.innerHTML = "";
 
-    this.toasts.forEach(toast => {
-      const element = document.createElement('div');
+    this.toasts.forEach((toast) => {
+      const element = document.createElement("div");
       element.style.cssText = `
         background: ${this.getBackgroundColor(toast.type)};
         color: white;
@@ -88,9 +92,9 @@ class ToastManager {
     });
 
     // Add animation CSS if not exists
-    if (!document.getElementById('vista-auth-toast-styles')) {
-      const style = document.createElement('style');
-      style.id = 'vista-auth-toast-styles';
+    if (!document.getElementById("vista-auth-toast-styles")) {
+      const style = document.createElement("style");
+      style.id = "vista-auth-toast-styles";
       style.textContent = `
         @keyframes slideIn {
           from {
@@ -111,22 +115,27 @@ class ToastManager {
 
   private getBackgroundColor(type: ToastType): string {
     switch (type) {
-      case 'success': return '#059669';
-      case 'error': return '#dc2626';
-      case 'warning': return '#d97706';
-      case 'info': return '#2563eb';
-      default: return '#374151';
+      case "success":
+        return "#059669";
+      case "error":
+        return "#dc2626";
+      case "warning":
+        return "#d97706";
+      case "info":
+        return "#2563eb";
+      default:
+        return "#374151";
     }
   }
 
   private notifyListeners(): void {
-    this.listeners.forEach(listener => listener(this.toasts));
+    this.listeners.forEach((listener) => listener(this.toasts));
   }
 
   onUpdate(listener: (toasts: Toast[]) => void): () => void {
     this.listeners.push(listener);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+      this.listeners = this.listeners.filter((l) => l !== listener);
     };
   }
 }
@@ -136,19 +145,19 @@ const toastManager = new ToastManager();
 
 // Export convenience functions
 export function showToast(message: string, duration?: number): void {
-  toastManager.show(message, 'success', duration);
+  toastManager.show(message, "success", duration);
 }
 
 export function showError(message: string, duration?: number): void {
-  toastManager.show(message, 'error', duration);
+  toastManager.show(message, "error", duration);
 }
 
 export function showWarning(message: string, duration?: number): void {
-  toastManager.show(message, 'warning', duration);
+  toastManager.show(message, "warning", duration);
 }
 
 export function showInfo(message: string, duration?: number): void {
-  toastManager.show(message, 'info', duration);
+  toastManager.show(message, "info", duration);
 }
 
 export function useToasts(callback: (toasts: Toast[]) => void): void {

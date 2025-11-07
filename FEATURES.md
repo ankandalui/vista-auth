@@ -3,6 +3,7 @@
 ## ✅ Implemented Features
 
 ### 🔐 Core Authentication
+
 - [x] **Password hashing** - bcrypt with configurable rounds (default: 10)
 - [x] **JWT tokens** - Secure token generation and verification
 - [x] **Session management** - Configurable session duration (default: 7 days)
@@ -14,6 +15,7 @@
 - [x] **Session expiry** - Automatic expiration handling
 
 ### 🎨 Client-Side (React)
+
 - [x] **AuthProvider** - Context provider for auth state
 - [x] **useAuth hook** - Complete auth API in one hook
 - [x] **User state** - Current user object with roles/permissions
@@ -26,6 +28,7 @@
 - [x] **IndexedDB** - Offline-first storage option
 
 ### 🕵️ Role-Based Access Control (RBAC)
+
 - [x] **User roles** - Array of role strings per user
 - [x] **User permissions** - Array of permission strings per user
 - [x] **hasRole()** - Check if user has specific role
@@ -42,6 +45,7 @@
 - [x] **Permission-based paths** - Middleware path-to-permission mapping
 
 ### 🧱 Middleware Support
+
 - [x] **Next.js middleware** - Full Next.js App Router support
 - [x] **Express middleware** - Node.js/Express integration
 - [x] **Remix loader** - Remix framework support
@@ -53,6 +57,7 @@
 - [x] **Token from header** - Read token from Authorization header
 
 ### 💾 Database Integration
+
 - [x] **Prisma adapter** - Works with any Prisma schema
 - [x] **MongoDB adapter** - Native driver or Mongoose support
 - [x] **Supabase adapter** - Full Supabase integration
@@ -65,6 +70,7 @@
 - [x] **Metadata support** - Store custom user data
 
 ### 💬 Built-in UI Helpers
+
 - [x] **Toast notifications** - Success, error, warning, info
 - [x] **showToast()** - Success notification helper
 - [x] **showError()** - Error notification helper
@@ -78,6 +84,7 @@
 - [x] **Toast container** - Fixed position container
 
 ### 🔄 Real-Time Features
+
 - [x] **WebSocket sync** - Real-time session synchronization
 - [x] **Multi-tab sync** - Sync sessions across browser tabs
 - [x] **Multi-device sync** - Sync sessions across devices
@@ -87,12 +94,14 @@
 - [x] **onSessionUpdate callback** - React to session changes
 
 ### 🌐 Offline Support
+
 - [x] **IndexedDB storage** - Offline-first token storage
 - [x] **Offline fallback** - Continue working offline
 - [x] **Session caching** - Cache session data locally
 - [x] **Auto-sync** - Sync when coming back online
 
 ### 🧠 CLI Auto-Setup
+
 - [x] **npx vista-auth init** - Interactive setup command
 - [x] **Framework selection** - Next.js, Remix, Vite, CRA, Express
 - [x] **Database selection** - Prisma, MongoDB, Supabase, PostgreSQL, Firebase
@@ -103,6 +112,7 @@
 - [x] **Example components** - Create login/signup examples
 
 ### 🔒 Security Features
+
 - [x] **bcrypt hashing** - Industry-standard password hashing
 - [x] **JWT tokens** - Secure stateless authentication
 - [x] **Token expiration** - Configurable token lifetime
@@ -113,6 +123,7 @@
 - [x] **XSS protection** - Secure token storage
 
 ### 🛠️ Developer Experience
+
 - [x] **TypeScript-first** - Full type safety
 - [x] **Simple API** - Intuitive, minimal surface area
 - [x] **Great docs** - Comprehensive README
@@ -123,6 +134,7 @@
 - [x] **Flexible config** - Customize everything
 
 ### 📦 Package Features
+
 - [x] **ESM + CJS** - Both module formats
 - [x] **Tree-shakeable** - Import only what you need
 - [x] **Type definitions** - Full .d.ts files
@@ -135,6 +147,7 @@
 ## 🎯 Framework Compatibility
 
 ### ✅ Fully Supported
+
 - [x] **Next.js 14+** - App Router & Pages Router
 - [x] **Remix** - Loader-based auth
 - [x] **Vite + React** - SPA support
@@ -145,6 +158,7 @@
 ## 💾 Database Compatibility
 
 ### ✅ Pre-built Adapters
+
 - [x] **Prisma** - Any database Prisma supports
 - [x] **MongoDB** - Native driver or Mongoose
 - [x] **Supabase** - Full Supabase integration
@@ -162,21 +176,21 @@
 
 ## 📊 Comparison with NextAuth
 
-| Feature | Vista Auth | NextAuth |
-|---------|-----------|----------|
-| Setup | 2 files, 5 min | 5+ files, 30+ min |
-| Code | ~150 lines | 500+ lines |
-| Database | Optional | Required |
-| Adapters | Not needed | Required |
-| TypeScript | Simple types | Complex generics |
-| Session | localStorage/DB | Database only |
-| Bundle | ~5KB | ~50KB |
-| RBAC | Built-in | Manual |
-| Real-time | WebSocket | No |
-| Offline | IndexedDB | No |
-| Toast/UI | Built-in | No |
-| Middleware | Multi-framework | Next.js only |
-| CLI | Auto-setup | Manual |
+| Feature    | Vista Auth      | NextAuth          |
+| ---------- | --------------- | ----------------- |
+| Setup      | 2 files, 5 min  | 5+ files, 30+ min |
+| Code       | ~150 lines      | 500+ lines        |
+| Database   | Optional        | Required          |
+| Adapters   | Not needed      | Required          |
+| TypeScript | Simple types    | Complex generics  |
+| Session    | localStorage/DB | Database only     |
+| Bundle     | ~5KB            | ~50KB             |
+| RBAC       | Built-in        | Manual            |
+| Real-time  | WebSocket       | No                |
+| Offline    | IndexedDB       | No                |
+| Toast/UI   | Built-in        | No                |
+| Middleware | Multi-framework | Next.js only      |
+| CLI        | Auto-setup      | Manual            |
 
 ## 🎉 What Makes Vista Auth Special
 
@@ -191,6 +205,7 @@
 ## 🔮 Future Features (Not Yet Implemented)
 
 ### 🔐 Authentication Methods
+
 - [ ] **OAuth providers** - Google, GitHub, Discord, etc.
 - [ ] **Magic links** - Passwordless email authentication
 - [ ] **Social login** - One-click social auth
@@ -198,6 +213,7 @@
 - [ ] **Passkeys/WebAuthn** - Biometric authentication
 
 ### 🛡️ Security Enhancements
+
 - [ ] **2FA/MFA** - TOTP, SMS, email codes
 - [ ] **Email verification** - Verify email addresses
 - [ ] **Password reset** - Email-based password recovery
@@ -207,12 +223,14 @@
 - [ ] **Session management UI** - View/revoke sessions
 
 ### 📊 Monitoring & Analytics
+
 - [ ] **Audit logging** - Track all auth events
 - [ ] **Analytics** - Sign-up/sign-in metrics
 - [ ] **Security alerts** - Suspicious activity notifications
 - [ ] **Admin dashboard** - Manage users/sessions
 
 ### 🎨 UI Components
+
 - [ ] **Pre-built login form** - Ready-to-use component
 - [ ] **Pre-built signup form** - Ready-to-use component
 - [ ] **Password strength meter** - Visual password strength
@@ -220,6 +238,7 @@
 - [ ] **Profile management** - Edit user profile
 
 ### 🔧 Developer Tools
+
 - [ ] **Dev dashboard** - Local auth inspector
 - [ ] **Testing utilities** - Mock auth for tests
 - [ ] **Migration tools** - Migrate from NextAuth

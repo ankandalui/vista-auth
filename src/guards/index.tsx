@@ -3,9 +3,9 @@
  * Role-based route protection for React components
  */
 
-import { useEffect, ComponentType, ReactNode } from 'react';
-import { useAuth } from '../client/provider';
-import type { RouteGuardConfig } from '../types';
+import { useEffect, ComponentType, ReactNode } from "react";
+import { useAuth } from "../client/provider";
+import type { RouteGuardConfig } from "../types";
 
 export interface ProtectedRouteProps extends RouteGuardConfig {
   children: ReactNode;
@@ -27,7 +27,15 @@ export function ProtectedRoute({
   fallback,
   loadingFallback,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user, hasRole, hasPermission, hasAllRoles, hasAnyRole } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    user,
+    hasRole,
+    hasPermission,
+    hasAllRoles,
+    hasAnyRole,
+  } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && redirect) {
@@ -48,7 +56,9 @@ export function ProtectedRoute({
 
   // Check roles
   if (roles && roles.length > 0) {
-    const hasRequiredRoles = requireAll ? hasAllRoles(roles) : hasAnyRole(roles);
+    const hasRequiredRoles = requireAll
+      ? hasAllRoles(roles)
+      : hasAnyRole(roles);
     if (!hasRequiredRoles) {
       if (onUnauthorized) {
         onUnauthorized();
@@ -60,9 +70,9 @@ export function ProtectedRoute({
   // Check permissions
   if (permissions && permissions.length > 0) {
     const hasRequiredPermissions = requireAll
-      ? permissions.every(p => hasPermission(p))
-      : permissions.some(p => hasPermission(p));
-    
+      ? permissions.every((p) => hasPermission(p))
+      : permissions.some((p) => hasPermission(p));
+
     if (!hasRequiredPermissions) {
       if (onUnauthorized) {
         onUnauthorized();
@@ -94,7 +104,14 @@ export function withAuth<P extends object>(
  * Hook for programmatic route guarding
  */
 export function useRouteGuard(config: RouteGuardConfig) {
-  const { isAuthenticated, isLoading, hasRole, hasPermission, hasAllRoles, hasAnyRole } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    hasRole,
+    hasPermission,
+    hasAllRoles,
+    hasAnyRole,
+  } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
@@ -110,7 +127,9 @@ export function useRouteGuard(config: RouteGuardConfig) {
 
     // Check roles
     if (config.roles && config.roles.length > 0) {
-      const hasRequiredRoles = config.requireAll ? hasAllRoles(config.roles) : hasAnyRole(config.roles);
+      const hasRequiredRoles = config.requireAll
+        ? hasAllRoles(config.roles)
+        : hasAnyRole(config.roles);
       if (!hasRequiredRoles) {
         if (config.redirect) {
           window.location.href = config.redirect;
@@ -123,9 +142,9 @@ export function useRouteGuard(config: RouteGuardConfig) {
     // Check permissions
     if (config.permissions && config.permissions.length > 0) {
       const hasRequiredPermissions = config.requireAll
-        ? config.permissions.every(p => hasPermission(p))
-        : config.permissions.some(p => hasPermission(p));
-      
+        ? config.permissions.every((p) => hasPermission(p))
+        : config.permissions.some((p) => hasPermission(p));
+
       if (!hasRequiredPermissions) {
         if (config.redirect) {
           window.location.href = config.redirect;
@@ -149,7 +168,10 @@ export function useRequireRole(role: string | string[], redirect?: string) {
   useRouteGuard({ roles, redirect });
 }
 
-export function useRequirePermission(permission: string | string[], redirect?: string) {
+export function useRequirePermission(
+  permission: string | string[],
+  redirect?: string
+) {
   const permissions = Array.isArray(permission) ? permission : [permission];
   useRouteGuard({ permissions, redirect });
 }

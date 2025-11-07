@@ -15,6 +15,7 @@ npx vista-auth init
 ```
 
 This interactive CLI will:
+
 - Ask about your framework (Next.js, Remix, Vite, etc.)
 - Ask about your database (Prisma, MongoDB, Supabase, etc.)
 - Select features (RBAC, WebSocket, Toast, IndexedDB)
@@ -29,13 +30,13 @@ This interactive CLI will:
 
 ```ts
 // vista-auth.config.ts
-import { createVistaAuth } from 'vista-auth/server';
-import { createPrismaAdapter } from 'vista-auth/database';
-import { prisma } from './lib/prisma'; // Your Prisma client
+import { createVistaAuth } from "vista-auth/server";
+import { createPrismaAdapter } from "vista-auth/database";
+import { prisma } from "./lib/prisma"; // Your Prisma client
 
 export const auth = createVistaAuth({
   database: createPrismaAdapter(prisma),
-  jwtSecret: process.env.VISTA_AUTH_SECRET || 'change-me-in-production',
+  jwtSecret: process.env.VISTA_AUTH_SECRET || "change-me-in-production",
 });
 ```
 
@@ -45,27 +46,27 @@ export const auth = createVistaAuth({
 
 ```ts
 // app/api/auth/[...vistaauth]/route.ts
-import { auth } from '@/vista-auth.config';
+import { auth } from "@/vista-auth.config";
 
 export async function POST(request: Request) {
   const body = await request.json();
   const url = new URL(request.url);
-  
-  if (url.pathname.includes('/signin')) {
+
+  if (url.pathname.includes("/signin")) {
     return Response.json(await auth.signIn(body));
   }
-  if (url.pathname.includes('/signup')) {
+  if (url.pathname.includes("/signup")) {
     return Response.json(await auth.signUp(body));
   }
-  if (url.pathname.includes('/signout')) {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  if (url.pathname.includes("/signout")) {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
     const payload = auth.verifyToken(token);
     return Response.json(await auth.signOut(payload.sessionId));
   }
 }
 
 export async function GET(request: Request) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   return Response.json(await auth.getSession(token));
 }
 ```
@@ -74,17 +75,15 @@ export async function GET(request: Request) {
 
 ```tsx
 // app/layout.tsx or app/providers.tsx
-'use client';
+"use client";
 
-import { AuthProvider } from 'vista-auth/client';
+import { AuthProvider } from "vista-auth/client";
 
 export default function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <AuthProvider apiEndpoint="/api/auth">
-          {children}
-        </AuthProvider>
+        <AuthProvider apiEndpoint="/api/auth">{children}</AuthProvider>
       </body>
     </html>
   );
@@ -95,15 +94,15 @@ export default function RootLayout({ children }) {
 
 ```tsx
 // app/login/page.tsx
-'use client';
+"use client";
 
-import { useAuth } from 'vista-auth/client';
-import { useState } from 'react';
+import { useAuth } from "vista-auth/client";
+import { useState } from "react";
 
 export default function LoginPage() {
   const { signIn, signUp } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,41 +115,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '100px auto' }}>
+    <div style={{ maxWidth: "400px", margin: "100px auto" }}>
       <form onSubmit={handleSubmit}>
-        <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
-        
+        <h1>{isSignUp ? "Sign Up" : "Sign In"}</h1>
+
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ width: '100%', padding: '10px', margin: '10px 0' }}
+          style={{ width: "100%", padding: "10px", margin: "10px 0" }}
         />
-        
+
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ width: '100%', padding: '10px', margin: '10px 0' }}
+          style={{ width: "100%", padding: "10px", margin: "10px 0" }}
         />
-        
-        <button 
+
+        <button
           type="submit"
-          style={{ width: '100%', padding: '10px', margin: '10px 0' }}
+          style={{ width: "100%", padding: "10px", margin: "10px 0" }}
         >
-          {isSignUp ? 'Sign Up' : 'Sign In'}
+          {isSignUp ? "Sign Up" : "Sign In"}
         </button>
-        
-        <button 
-          type="button" 
+
+        <button
+          type="button"
           onClick={() => setIsSignUp(!isSignUp)}
-          style={{ width: '100%', padding: '10px' }}
+          style={{ width: "100%", padding: "10px" }}
         >
-          {isSignUp ? 'Have an account?' : 'Need an account?'}
+          {isSignUp ? "Have an account?" : "Need an account?"}
         </button>
       </form>
     </div>
@@ -163,9 +162,9 @@ export default function LoginPage() {
 ### Show User Info
 
 ```tsx
-'use client';
+"use client";
 
-import { useAuth } from 'vista-auth/client';
+import { useAuth } from "vista-auth/client";
 
 export default function HomePage() {
   const { user, isAuthenticated, signOut } = useAuth();
@@ -186,10 +185,10 @@ export default function HomePage() {
 ### Protect a Page
 
 ```tsx
-'use client';
+"use client";
 
-import { ProtectedRoute } from 'vista-auth/guards';
-import { useAuth } from 'vista-auth/client';
+import { ProtectedRoute } from "vista-auth/guards";
+import { useAuth } from "vista-auth/client";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -206,14 +205,14 @@ export default function DashboardPage() {
 ### Admin-Only Page
 
 ```tsx
-'use client';
+"use client";
 
-import { ProtectedRoute } from 'vista-auth/guards';
+import { ProtectedRoute } from "vista-auth/guards";
 
 export default function AdminPage() {
   return (
-    <ProtectedRoute 
-      roles={['admin']} 
+    <ProtectedRoute
+      roles={["admin"]}
       redirect="/login"
       fallback={<div>Access Denied</div>}
     >
@@ -242,6 +241,7 @@ model User {
 ```
 
 Run migrations:
+
 ```bash
 npx prisma migrate dev --name init
 ```
@@ -250,16 +250,16 @@ npx prisma migrate dev --name init
 
 ```ts
 // lib/mongodb.ts
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 
 const client = new MongoClient(process.env.MONGODB_URL!);
-export const db = client.db('myapp');
+export const db = client.db("myapp");
 ```
 
 ```ts
 // vista-auth.config.ts
-import { createMongoAdapter } from 'vista-auth/database';
-import { db } from './lib/mongodb';
+import { createMongoAdapter } from "vista-auth/database";
+import { db } from "./lib/mongodb";
 
 export const auth = createVistaAuth({
   database: createMongoAdapter(db),
@@ -270,7 +270,7 @@ export const auth = createVistaAuth({
 
 ```ts
 // lib/supabase.ts
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -280,8 +280,8 @@ export const supabase = createClient(
 
 ```ts
 // vista-auth.config.ts
-import { createSupabaseAdapter } from 'vista-auth/database';
-import { supabase } from './lib/supabase';
+import { createSupabaseAdapter } from "vista-auth/database";
+import { supabase } from "./lib/supabase";
 
 export const auth = createVistaAuth({
   database: createSupabaseAdapter(supabase),
@@ -299,6 +299,7 @@ DATABASE_URL=your-database-url
 ## ✅ You're Done!
 
 That's it! You now have:
+
 - ✅ User sign up
 - ✅ User sign in
 - ✅ User sign out
@@ -313,11 +314,11 @@ That's it! You now have:
 ### Enable WebSocket Sync
 
 ```tsx
-<AuthProvider 
+<AuthProvider
   apiEndpoint="/api/auth"
   config={{
     sessionSyncEnabled: true,
-    websocketUrl: 'wss://your-domain.com/ws/auth'
+    websocketUrl: "wss://your-domain.com/ws/auth",
   }}
 >
   {children}
@@ -327,9 +328,9 @@ That's it! You now have:
 ### Enable IndexedDB (Offline)
 
 ```tsx
-<AuthProvider 
+<AuthProvider
   config={{
-    sessionStorage: 'indexedDB',
+    sessionStorage: "indexedDB",
     offlineFallback: true,
   }}
 >
@@ -341,13 +342,13 @@ That's it! You now have:
 
 ```ts
 // middleware.ts
-import { createNextMiddleware } from 'vista-auth/middleware';
+import { createNextMiddleware } from "vista-auth/middleware";
 
 export default createNextMiddleware({
-  publicPaths: ['/', '/login', '/signup'],
+  publicPaths: ["/", "/login", "/signup"],
   roleBasedPaths: {
-    '/admin/*': ['admin'],
-    '/dashboard/*': ['user', 'admin'],
+    "/admin/*": ["admin"],
+    "/dashboard/*": ["user", "admin"],
   },
 });
 ```

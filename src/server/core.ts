@@ -3,9 +3,9 @@
  * Server-side authentication logic
  */
 
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { nanoid } from 'nanoid';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { nanoid } from "nanoid";
 import type {
   User,
   Session,
@@ -15,23 +15,33 @@ import type {
   SignUpData,
   AuthResponse,
   AuthError,
-} from '../types';
+} from "../types";
 
 export class VistaAuthServer {
-  private config: Required<Pick<AuthConfig, 'bcryptRounds' | 'jwtSecret' | 'jwtExpiresIn' | 'sessionDuration'>>;
+  private config: Required<
+    Pick<
+      AuthConfig,
+      "bcryptRounds" | "jwtSecret" | "jwtExpiresIn" | "sessionDuration"
+    >
+  >;
   private database?: DatabaseAdapter;
 
   constructor(config: AuthConfig = {}) {
     this.config = {
       bcryptRounds: config.bcryptRounds || 10,
-      jwtSecret: config.jwtSecret || process.env.VISTA_AUTH_SECRET || 'vista-auth-secret-change-in-production',
-      jwtExpiresIn: config.jwtExpiresIn || '7d',
+      jwtSecret:
+        config.jwtSecret ||
+        process.env.VISTA_AUTH_SECRET ||
+        "vista-auth-secret-change-in-production",
+      jwtExpiresIn: config.jwtExpiresIn || "7d",
       sessionDuration: config.sessionDuration || 7 * 24 * 60 * 60 * 1000, // 7 days
     };
     this.database = config.database;
 
     if (!config.jwtSecret && !process.env.VISTA_AUTH_SECRET) {
-      console.warn('[Vista Auth] No JWT secret provided. Using default (INSECURE). Set VISTA_AUTH_SECRET environment variable.');
+      console.warn(
+        "[Vista Auth] No JWT secret provided. Using default (INSECURE). Set VISTA_AUTH_SECRET environment variable."
+      );
     }
   }
 
@@ -70,16 +80,26 @@ export class VistaAuthServer {
   /**
    * Sign up a new user
    */
-  async signUp(data: SignUpData): Promise<AuthResponse<{ user: User; token: string; session: Session }>> {
+  async signUp(
+    data: SignUpData
+  ): Promise<AuthResponse<{ user: User; token: string; session: Session }>> {
     try {
       if (!this.database) {
-        throw this.createError('NO_DATABASE', 'Database adapter not configured', 500);
+        throw this.createError(
+          "NO_DATABASE",
+          "Database adapter not configured",
+          500
+        );
       }
 
       // Check if user already exists
       const existingUser = await this.database.findUserByEmail(data.email);
       if (existingUser) {
-        throw this.createError('USER_EXISTS', 'User with this email already exists', 400);
+        throw this.createError(
+          "USER_EXISTS",
+          "User with this email already exists",
+          400
+        );
       }
 
       // Hash password
@@ -90,7 +110,7 @@ export class VistaAuthServer {
         id: nanoid(),
         email: data.email,
         name: data.name,
-        roles: ['user'], // Default role
+        roles: ["user"], // Default role
         permissions: [],
         metadata: {
           ...data.metadata,
@@ -105,11 +125,11 @@ export class VistaAuthServer {
       const session = await this.createSession(user.id, userWithoutPassword);
 
       // Generate token with expiry
-      const token = this.generateToken({ 
-        userId: user.id, 
+      const token = this.generateToken({
+        userId: user.id,
         sessionId: session.sessionId,
         exp: Math.floor(session.expiresAt / 1000),
-        iat: Math.floor(session.createdAt / 1000)
+        iat: Math.floor(session.createdAt / 1000),
       });
 
       return {
@@ -131,27 +151,44 @@ export class VistaAuthServer {
   /**
    * Sign in a user
    */
-  async signIn(credentials: SignInCredentials): Promise<AuthResponse<{ user: User; token: string; session: Session }>> {
+  async signIn(
+    credentials: SignInCredentials
+  ): Promise<AuthResponse<{ user: User; token: string; session: Session }>> {
     try {
       if (!this.database) {
-        throw this.createError('NO_DATABASE', 'Database adapter not configured', 500);
+        throw this.createError(
+          "NO_DATABASE",
+          "Database adapter not configured",
+          500
+        );
       }
 
       // Find user
       const user = await this.database.findUserByEmail(credentials.email);
       if (!user) {
-        throw this.createError('INVALID_CREDENTIALS', 'Invalid email or password', 401);
+        throw this.createError(
+          "INVALID_CREDENTIALS",
+          "Invalid email or password",
+          401
+        );
       }
 
       // Verify password
       const passwordHash = user.metadata?.password;
       if (!passwordHash) {
-        throw this.createError('NO_PASSWORD', 'User has no password set', 500);
+        throw this.createError("NO_PASSWORD", "User has no password set", 500);
       }
 
-      const isValid = await this.verifyPassword(credentials.password, passwordHash);
+      const isValid = await this.verifyPassword(
+        credentials.password,
+        passwordHash
+      );
       if (!isValid) {
-        throw this.createError('INVALID_CREDENTIALS', 'Invalid email or password', 401);
+        throw this.createError(
+          "INVALID_CREDENTIALS",
+          "Invalid email or password",
+          401
+        );
       }
 
       // Remove password from user object
@@ -161,11 +198,11 @@ export class VistaAuthServer {
       const session = await this.createSession(user.id, userWithoutPassword);
 
       // Generate token with expiry
-      const token = this.generateToken({ 
-        userId: user.id, 
+      const token = this.generateToken({
+        userId: user.id,
         sessionId: session.sessionId,
         exp: Math.floor(session.expiresAt / 1000),
-        iat: Math.floor(session.createdAt / 1000)
+        iat: Math.floor(session.createdAt / 1000),
       });
 
       return {
@@ -191,16 +228,24 @@ export class VistaAuthServer {
     try {
       const payload = this.verifyToken(token);
       if (!payload) {
-        throw this.createError('INVALID_TOKEN', 'Invalid or expired token', 401);
+        throw this.createError(
+          "INVALID_TOKEN",
+          "Invalid or expired token",
+          401
+        );
       }
 
       if (!this.database) {
-        throw this.createError('NO_DATABASE', 'Database adapter not configured', 500);
+        throw this.createError(
+          "NO_DATABASE",
+          "Database adapter not configured",
+          500
+        );
       }
 
       const user = await this.database.findUserById(payload.userId);
       if (!user) {
-        throw this.createError('USER_NOT_FOUND', 'User not found', 404);
+        throw this.createError("USER_NOT_FOUND", "User not found", 404);
       }
 
       const userWithoutPassword = this.sanitizeUser(user);
@@ -281,7 +326,11 @@ export class VistaAuthServer {
   /**
    * Create an auth error
    */
-  private createError(code: string, message: string, statusCode: number = 400): AuthError {
+  private createError(
+    code: string,
+    message: string,
+    statusCode: number = 400
+  ): AuthError {
     return { code, message, statusCode };
   }
 
@@ -293,8 +342,8 @@ export class VistaAuthServer {
       return error as AuthError;
     }
     return {
-      code: 'INTERNAL_ERROR',
-      message: error.message || 'An unexpected error occurred',
+      code: "INTERNAL_ERROR",
+      message: error.message || "An unexpected error occurred",
       statusCode: 500,
     };
   }
@@ -310,7 +359,9 @@ export function createVistaAuth(config?: AuthConfig): VistaAuthServer {
 
 export function getVistaAuth(): VistaAuthServer {
   if (!serverInstance) {
-    throw new Error('[Vista Auth] Server not initialized. Call createVistaAuth() first.');
+    throw new Error(
+      "[Vista Auth] Server not initialized. Call createVistaAuth() first."
+    );
   }
   return serverInstance;
 }

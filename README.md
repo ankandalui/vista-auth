@@ -34,6 +34,7 @@ npx vista-auth init
 ```
 
 This creates:
+
 - `vista-auth.config.js` - Server configuration
 - `app/api/auth/route.js` - API endpoints (Next.js)
 - `providers.jsx` - Client provider setup
@@ -43,15 +44,13 @@ This creates:
 
 ```tsx
 // app/layout.tsx (Next.js) or main.tsx (Vite)
-import { AuthProvider } from 'vista-auth/client';
+import { AuthProvider } from "vista-auth/client";
 
 export default function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <AuthProvider apiEndpoint="/api/auth">
-          {children}
-        </AuthProvider>
+        <AuthProvider apiEndpoint="/api/auth">{children}</AuthProvider>
       </body>
     </html>
   );
@@ -61,9 +60,9 @@ export default function RootLayout({ children }) {
 ### 3. Use authentication in your components
 
 ```tsx
-'use client';
+"use client";
 
-import { useAuth } from 'vista-auth/client';
+import { useAuth } from "vista-auth/client";
 
 export default function LoginPage() {
   const { signIn, user, isAuthenticated } = useAuth();
@@ -73,14 +72,16 @@ export default function LoginPage() {
   }
 
   return (
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      signIn({
-        email: formData.get('email'),
-        password: formData.get('password')
-      });
-    }}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        signIn({
+          email: formData.get("email"),
+          password: formData.get("password"),
+        });
+      }}
+    >
       <input name="email" type="email" placeholder="Email" />
       <input name="password" type="password" placeholder="Password" />
       <button>Sign In</button>
@@ -95,9 +96,9 @@ export default function LoginPage() {
 
 ```ts
 // vista-auth.config.ts
-import { createVistaAuth } from 'vista-auth/server';
-import { createPrismaAdapter } from 'vista-auth/database';
-import { prisma } from './lib/prisma';
+import { createVistaAuth } from "vista-auth/server";
+import { createPrismaAdapter } from "vista-auth/database";
+import { prisma } from "./lib/prisma";
 
 export const auth = createVistaAuth({
   database: createPrismaAdapter(prisma),
@@ -108,8 +109,8 @@ export const auth = createVistaAuth({
 ### MongoDB
 
 ```ts
-import { createMongoAdapter } from 'vista-auth/database';
-import { db } from './lib/mongodb';
+import { createMongoAdapter } from "vista-auth/database";
+import { db } from "./lib/mongodb";
 
 export const auth = createVistaAuth({
   database: createMongoAdapter(db),
@@ -119,8 +120,8 @@ export const auth = createVistaAuth({
 ### Supabase
 
 ```ts
-import { createSupabaseAdapter } from 'vista-auth/database';
-import { supabase } from './lib/supabase';
+import { createSupabaseAdapter } from "vista-auth/database";
+import { supabase } from "./lib/supabase";
 
 export const auth = createVistaAuth({
   database: createSupabaseAdapter(supabase),
@@ -133,10 +134,10 @@ export const auth = createVistaAuth({
 export const auth = createVistaAuth({
   database: {
     async findUserByEmail(email) {
-      return db.query('SELECT * FROM users WHERE email = ?', [email]);
+      return db.query("SELECT * FROM users WHERE email = ?", [email]);
     },
     async createUser(data) {
-      return db.query('INSERT INTO users SET ?', [data]);
+      return db.query("INSERT INTO users SET ?", [data]);
     },
     // ... implement other methods
   },
@@ -148,12 +149,12 @@ export const auth = createVistaAuth({
 ### Protect Routes
 
 ```tsx
-import { ProtectedRoute } from 'vista-auth/guards';
+import { ProtectedRoute } from "vista-auth/guards";
 
 function AdminPage() {
   return (
-    <ProtectedRoute 
-      roles={['admin']} 
+    <ProtectedRoute
+      roles={["admin"]}
       redirect="/login"
       fallback={<div>Access Denied</div>}
     >
@@ -166,11 +167,11 @@ function AdminPage() {
 ### Route Guards Hook
 
 ```tsx
-import { useRequireRole } from 'vista-auth/guards';
+import { useRequireRole } from "vista-auth/guards";
 
 function AdminPage() {
-  useRequireRole('admin', '/login'); // Auto-redirects if not admin
-  
+  useRequireRole("admin", "/login"); // Auto-redirects if not admin
+
   return <h1>Admin Dashboard</h1>;
 }
 ```
@@ -179,13 +180,13 @@ function AdminPage() {
 
 ```ts
 // middleware.ts
-import { createNextMiddleware } from 'vista-auth/middleware';
+import { createNextMiddleware } from "vista-auth/middleware";
 
 export default createNextMiddleware({
-  publicPaths: ['/login', '/signup', '/'],
+  publicPaths: ["/login", "/signup", "/"],
   roleBasedPaths: {
-    '/admin/*': ['admin'],
-    '/dashboard/*': ['user', 'admin'],
+    "/admin/*": ["admin"],
+    "/dashboard/*": ["user", "admin"],
   },
 });
 ```
@@ -193,10 +194,10 @@ export default createNextMiddleware({
 ### Express Middleware
 
 ```ts
-import { createExpressMiddleware } from 'vista-auth/middleware';
+import { createExpressMiddleware } from "vista-auth/middleware";
 
 const authMiddleware = createExpressMiddleware({
-  publicPaths: ['/login', '/signup'],
+  publicPaths: ["/login", "/signup"],
 });
 
 app.use(authMiddleware);
@@ -205,26 +206,26 @@ app.use(authMiddleware);
 ## 🎨 Built-in UI Helpers
 
 ```tsx
-import { showToast, showError } from 'vista-auth/ui';
+import { showToast, showError } from "vista-auth/ui";
 
 // Success toast
-showToast('Login successful!');
+showToast("Login successful!");
 
 // Error message
-showError('Invalid credentials');
+showError("Invalid credentials");
 
 // Custom duration
-showToast('Session expires in 5 minutes', 5000);
+showToast("Session expires in 5 minutes", 5000);
 ```
 
 ## 🔄 Real-Time Session Sync
 
 ```tsx
-<AuthProvider 
+<AuthProvider
   apiEndpoint="/api/auth"
   config={{
     sessionSyncEnabled: true,
-    websocketUrl: 'wss://your-domain.com/ws/auth'
+    websocketUrl: "wss://your-domain.com/ws/auth",
   }}
 >
   {children}
@@ -234,9 +235,9 @@ showToast('Session expires in 5 minutes', 5000);
 ## 💾 Offline Support
 
 ```tsx
-<AuthProvider 
+<AuthProvider
   config={{
-    sessionStorage: 'indexedDB', // localStorage, sessionStorage, or indexedDB
+    sessionStorage: "indexedDB", // localStorage, sessionStorage, or indexedDB
     offlineFallback: true,
   }}
 >
@@ -250,18 +251,18 @@ showToast('Session expires in 5 minutes', 5000);
 
 ```tsx
 const {
-  user,              // Current user object
-  session,           // Current session
-  isLoading,         // Loading state
-  isAuthenticated,   // Auth status
-  signIn,            // (credentials) => Promise
-  signUp,            // (data) => Promise
-  signOut,           // () => Promise
-  updateUser,        // (data) => void
-  hasRole,           // (role) => boolean
-  hasPermission,     // (permission) => boolean
-  hasAnyRole,        // (roles[]) => boolean
-  hasAllRoles,       // (roles[]) => boolean
+  user, // Current user object
+  session, // Current session
+  isLoading, // Loading state
+  isAuthenticated, // Auth status
+  signIn, // (credentials) => Promise
+  signUp, // (data) => Promise
+  signOut, // () => Promise
+  updateUser, // (data) => void
+  hasRole, // (role) => boolean
+  hasPermission, // (permission) => boolean
+  hasAnyRole, // (roles[]) => boolean
+  hasAllRoles, // (roles[]) => boolean
 } = useAuth();
 ```
 
@@ -287,18 +288,18 @@ const payload = auth.verifyToken(token);
 
 ## 📊 Features Comparison
 
-| Feature | Vista Auth | NextAuth |
-|---------|-----------|----------|
-| **Setup** | 2 files | 5+ files + DB setup |
-| **Code** | ~150 lines | 500+ lines |
-| **Database** | Any or none | Required + Adapter |
-| **TypeScript** | Built-in | Complex generics |
-| **Session** | localStorage/DB | Database only |
-| **Bundle** | ~5KB | ~50KB |
-| **RBAC** | Built-in | Manual |
-| **Real-time** | WebSocket | No |
-| **Offline** | IndexedDB | No |
-| **Toast/UI** | Built-in | No |
+| Feature        | Vista Auth      | NextAuth            |
+| -------------- | --------------- | ------------------- |
+| **Setup**      | 2 files         | 5+ files + DB setup |
+| **Code**       | ~150 lines      | 500+ lines          |
+| **Database**   | Any or none     | Required + Adapter  |
+| **TypeScript** | Built-in        | Complex generics    |
+| **Session**    | localStorage/DB | Database only       |
+| **Bundle**     | ~5KB            | ~50KB               |
+| **RBAC**       | Built-in        | Manual              |
+| **Real-time**  | WebSocket       | No                  |
+| **Offline**    | IndexedDB       | No                  |
+| **Toast/UI**   | Built-in        | No                  |
 
 ## 🔒 Security Features
 
@@ -319,27 +320,27 @@ const payload = auth.verifyToken(token);
 const { signUp } = useAuth();
 
 await signUp({
-  email: 'user@example.com',
-  password: 'securepassword',
-  name: 'John Doe',
-  metadata: { theme: 'dark' }
+  email: "user@example.com",
+  password: "securepassword",
+  name: "John Doe",
+  metadata: { theme: "dark" },
 });
 ```
 
 ### Protected API Route (Next.js)
 
 ```ts
-import { auth } from '@/vista-auth.config';
+import { auth } from "@/vista-auth.config";
 
 export async function GET(request) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   const session = await auth.getSession(token);
-  
+
   if (!session.success) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  
-  return Response.json({ data: 'Protected data' });
+
+  return Response.json({ data: "Protected data" });
 }
 ```
 
@@ -348,15 +349,15 @@ export async function GET(request) {
 ```tsx
 const { hasRole, hasAnyRole, hasAllRoles } = useAuth();
 
-if (hasRole('admin')) {
+if (hasRole("admin")) {
   // Show admin features
 }
 
-if (hasAnyRole(['admin', 'moderator'])) {
+if (hasAnyRole(["admin", "moderator"])) {
   // Show moderation features
 }
 
-if (hasAllRoles(['admin', 'superuser'])) {
+if (hasAllRoles(["admin", "superuser"])) {
   // Show super admin features
 }
 ```
@@ -367,28 +368,28 @@ if (hasAllRoles(['admin', 'superuser'])) {
 createVistaAuth({
   // Database (optional)
   database: createPrismaAdapter(prisma),
-  
+
   // Security
   bcryptRounds: 10,
   jwtSecret: process.env.VISTA_AUTH_SECRET,
-  jwtExpiresIn: '7d',
+  jwtExpiresIn: "7d",
   sessionDuration: 7 * 24 * 60 * 60 * 1000,
-  
+
   // Storage
-  sessionStorage: 'localStorage', // or 'sessionStorage', 'indexedDB'
-  
+  sessionStorage: "localStorage", // or 'sessionStorage', 'indexedDB'
+
   // Features
   sessionSyncEnabled: true,
-  websocketUrl: 'wss://your-domain.com/ws/auth',
+  websocketUrl: "wss://your-domain.com/ws/auth",
   offlineFallback: true,
   toastEnabled: true,
   errorMessagesEnabled: true,
-  
+
   // Callbacks
-  onSignIn: (user) => console.log('Signed in:', user),
-  onSignOut: () => console.log('Signed out'),
-  onSessionExpired: () => console.log('Session expired'),
-  onError: (error) => console.error('Auth error:', error),
+  onSignIn: (user) => console.log("Signed in:", user),
+  onSignOut: () => console.log("Signed out"),
+  onSessionExpired: () => console.log("Session expired"),
+  onError: (error) => console.error("Auth error:", error),
 });
 ```
 

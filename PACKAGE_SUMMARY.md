@@ -59,6 +59,7 @@ packages/vista-auth/
 ## ✨ Core Features Implemented
 
 ### 1. 🔐 Authentication Core
+
 - ✅ bcrypt password hashing (configurable rounds)
 - ✅ JWT token generation & verification
 - ✅ Secure session management
@@ -66,6 +67,7 @@ packages/vista-auth/
 - ✅ Session expiry handling
 
 ### 2. 🎨 Client-Side (React)
+
 - ✅ `<AuthProvider>` component
 - ✅ `useAuth()` hook with all auth methods
 - ✅ `user`, `session`, `isAuthenticated`, `isLoading` states
@@ -73,6 +75,7 @@ packages/vista-auth/
 - ✅ `hasRole`, `hasPermission`, `hasAnyRole`, `hasAllRoles` helpers
 
 ### 3. 🕵️ Role-Based Access Control (RBAC)
+
 - ✅ `<ProtectedRoute>` component
 - ✅ `withAuth()` HOC for protecting components
 - ✅ `useRouteGuard()` hook
@@ -80,6 +83,7 @@ packages/vista-auth/
 - ✅ Role and permission checks
 
 ### 4. 🧱 Middleware Support
+
 - ✅ Next.js middleware (`createNextMiddleware`)
 - ✅ Express middleware (`createExpressMiddleware`)
 - ✅ Remix loader (`createRemixLoader`)
@@ -87,6 +91,7 @@ packages/vista-auth/
 - ✅ Works with ANY framework
 
 ### 5. 💾 Database Integration
+
 - ✅ **Prisma adapter** - Works with any Prisma schema
 - ✅ **MongoDB adapter** - Native driver or Mongoose
 - ✅ **Supabase adapter** - Full Supabase support
@@ -96,6 +101,7 @@ packages/vista-auth/
 - ✅ **No database** - Works with localStorage only!
 
 ### 6. 💬 Built-in UI Helpers
+
 - ✅ Toast notifications (`showToast`, `showError`, `showWarning`, `showInfo`)
 - ✅ Auto-dismiss with configurable duration
 - ✅ Click to dismiss
@@ -103,6 +109,7 @@ packages/vista-auth/
 - ✅ Professional styling
 
 ### 7. 🔄 Advanced Features
+
 - ✅ **WebSocket session sync** - Real-time session updates across tabs/devices
 - ✅ **IndexedDB offline support** - Works offline with IndexedDB caching
 - ✅ **Session storage options** - localStorage, sessionStorage, or IndexedDB
@@ -110,6 +117,7 @@ packages/vista-auth/
 - ✅ **Session expiry checks** - Automatic session expiration handling
 
 ### 8. 🧠 CLI Auto-Setup
+
 - ✅ `npx vista-auth init` command
 - ✅ Interactive prompts for framework selection
 - ✅ Database adapter selection
@@ -122,38 +130,39 @@ packages/vista-auth/
 ## 📚 Usage Examples
 
 ### Install
+
 ```bash
 npm install vista-auth
 ```
 
 ### Quick Start
+
 ```tsx
 // 1. Wrap app with AuthProvider
-import { AuthProvider } from 'vista-auth/client';
+import { AuthProvider } from "vista-auth/client";
 
-<AuthProvider apiEndpoint="/api/auth">
-  {children}
-</AuthProvider>
+<AuthProvider apiEndpoint="/api/auth">{children}</AuthProvider>;
 
 // 2. Use authentication
-import { useAuth } from 'vista-auth/client';
+import { useAuth } from "vista-auth/client";
 
 const { signIn, user, isAuthenticated } = useAuth();
 
 // 3. Protect routes
-import { ProtectedRoute } from 'vista-auth/guards';
+import { ProtectedRoute } from "vista-auth/guards";
 
-<ProtectedRoute roles={['admin']}>
+<ProtectedRoute roles={["admin"]}>
   <AdminDashboard />
-</ProtectedRoute>
+</ProtectedRoute>;
 ```
 
 ### Server Setup
+
 ```ts
 // vista-auth.config.ts
-import { createVistaAuth } from 'vista-auth/server';
-import { createPrismaAdapter } from 'vista-auth/database';
-import { prisma } from './lib/prisma';
+import { createVistaAuth } from "vista-auth/server";
+import { createPrismaAdapter } from "vista-auth/database";
+import { prisma } from "./lib/prisma";
 
 export const auth = createVistaAuth({
   database: createPrismaAdapter(prisma),
@@ -179,31 +188,31 @@ export const auth = createVistaAuth({
 
 ```ts
 // Main
-import { useAuth, AuthProvider } from 'vista-auth';
+import { useAuth, AuthProvider } from "vista-auth";
 
 // Client
-import { useAuth, AuthProvider } from 'vista-auth/client';
+import { useAuth, AuthProvider } from "vista-auth/client";
 
 // Server
-import { createVistaAuth } from 'vista-auth/server';
+import { createVistaAuth } from "vista-auth/server";
 
 // Guards
-import { ProtectedRoute, withAuth, useRequireRole } from 'vista-auth/guards';
+import { ProtectedRoute, withAuth, useRequireRole } from "vista-auth/guards";
 
 // Middleware
-import { createNextMiddleware } from 'vista-auth/middleware';
+import { createNextMiddleware } from "vista-auth/middleware";
 
 // Database
-import { 
+import {
   createPrismaAdapter,
   createMongoAdapter,
   createSupabaseAdapter,
   createPostgresAdapter,
-  createFirebaseAdapter
-} from 'vista-auth/database';
+  createFirebaseAdapter,
+} from "vista-auth/database";
 
 // UI
-import { showToast, showError } from 'vista-auth/ui';
+import { showToast, showError } from "vista-auth/ui";
 ```
 
 ## 🚀 Next Steps
@@ -222,6 +231,7 @@ import { showToast, showError } from 'vista-auth/ui';
 ## 📖 Documentation
 
 See `README.md` for complete documentation including:
+
 - Installation guide
 - Quick start tutorial
 - Database integration examples

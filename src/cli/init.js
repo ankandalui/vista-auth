@@ -5,54 +5,54 @@
  * Auto-setup tool for quick integration
  */
 
-const fs = require('fs');
-const path = require('path');
-const { prompts } = require('./prompts');
+const fs = require("fs");
+const path = require("path");
+const { prompts } = require("./prompts");
 
 async function init() {
-  console.log('🔐 Vista Auth Setup\n');
+  console.log("🔐 Vista Auth Setup\n");
 
   const answers = await prompts([
     {
-      type: 'select',
-      name: 'framework',
-      message: 'Which framework are you using?',
+      type: "select",
+      name: "framework",
+      message: "Which framework are you using?",
       choices: [
-        { title: 'Next.js', value: 'nextjs' },
-        { title: 'Remix', value: 'remix' },
-        { title: 'Vite + React', value: 'vite' },
-        { title: 'Create React App', value: 'cra' },
-        { title: 'Express', value: 'express' },
-        { title: 'Other', value: 'other' },
+        { title: "Next.js", value: "nextjs" },
+        { title: "Remix", value: "remix" },
+        { title: "Vite + React", value: "vite" },
+        { title: "Create React App", value: "cra" },
+        { title: "Express", value: "express" },
+        { title: "Other", value: "other" },
       ],
     },
     {
-      type: 'select',
-      name: 'database',
-      message: 'Which database will you use?',
+      type: "select",
+      name: "database",
+      message: "Which database will you use?",
       choices: [
-        { title: 'Prisma', value: 'prisma' },
-        { title: 'MongoDB', value: 'mongodb' },
-        { title: 'Supabase', value: 'supabase' },
-        { title: 'PostgreSQL', value: 'postgres' },
-        { title: 'Firebase', value: 'firebase' },
-        { title: 'None (localStorage only)', value: 'none' },
+        { title: "Prisma", value: "prisma" },
+        { title: "MongoDB", value: "mongodb" },
+        { title: "Supabase", value: "supabase" },
+        { title: "PostgreSQL", value: "postgres" },
+        { title: "Firebase", value: "firebase" },
+        { title: "None (localStorage only)", value: "none" },
       ],
     },
     {
-      type: 'multiselect',
-      name: 'features',
-      message: 'Select features to enable:',
+      type: "multiselect",
+      name: "features",
+      message: "Select features to enable:",
       choices: [
-        { title: 'Role-based access control', value: 'rbac', selected: true },
-        { title: 'WebSocket session sync', value: 'websocket' },
-        { title: 'Toast notifications', value: 'toast', selected: true },
-        { title: 'IndexedDB offline support', value: 'indexeddb' },
+        { title: "Role-based access control", value: "rbac", selected: true },
+        { title: "WebSocket session sync", value: "websocket" },
+        { title: "Toast notifications", value: "toast", selected: true },
+        { title: "IndexedDB offline support", value: "indexeddb" },
       ],
     },
   ]);
 
-  console.log('\n📦 Creating files...\n');
+  console.log("\n📦 Creating files...\n");
 
   // Create config file
   createConfigFile(answers);
@@ -66,17 +66,19 @@ async function init() {
   // Create example components
   createExamples(answers);
 
-  console.log('\n✅ Setup complete!\n');
-  console.log('Next steps:');
-  console.log('1. Configure your database in the auth config');
-  console.log('2. Wrap your app with <AuthProvider>');
-  console.log('3. Use useAuth() hook in your components');
-  console.log('\nDocs: https://github.com/vista-auth/vista-auth\n');
+  console.log("\n✅ Setup complete!\n");
+  console.log("Next steps:");
+  console.log("1. Configure your database in the auth config");
+  console.log("2. Wrap your app with <AuthProvider>");
+  console.log("3. Use useAuth() hook in your components");
+  console.log("\nDocs: https://github.com/vista-auth/vista-auth\n");
 }
 
 function createConfigFile(answers) {
   const config = `import { createVistaAuth } from 'vista-auth/server';
-import { create${capitalize(answers.database)}Adapter } from 'vista-auth/database';
+import { create${capitalize(
+    answers.database
+  )}Adapter } from 'vista-auth/database';
 
 // Configure your database
 // import { db } from './your-database-setup';
@@ -92,9 +94,15 @@ export const auth = createVistaAuth({
   sessionDuration: 7 * 24 * 60 * 60 * 1000,
   
   // Features
-  ${answers.features.includes('websocket') ? "websocketUrl: process.env.WS_URL || 'ws://localhost:3000/ws/auth'," : ''}
-  ${answers.features.includes('toast') ? 'toastEnabled: true,' : ''}
-  ${answers.features.includes('indexeddb') ? "sessionStorage: 'indexedDB'," : ''}
+  ${
+    answers.features.includes("websocket")
+      ? "websocketUrl: process.env.WS_URL || 'ws://localhost:3000/ws/auth',"
+      : ""
+  }
+  ${answers.features.includes("toast") ? "toastEnabled: true," : ""}
+  ${
+    answers.features.includes("indexeddb") ? "sessionStorage: 'indexedDB'," : ""
+  }
   
   // Callbacks
   onSignIn: async (user) => {
@@ -106,12 +114,12 @@ export const auth = createVistaAuth({
 });
 `;
 
-  fs.writeFileSync('vista-auth.config.js', config);
-  console.log('✓ Created vista-auth.config.js');
+  fs.writeFileSync("vista-auth.config.js", config);
+  console.log("✓ Created vista-auth.config.js");
 }
 
 function createApiRoutes(answers) {
-  if (answers.framework === 'nextjs') {
+  if (answers.framework === "nextjs") {
     const routeHandler = `import { auth } from '@/vista-auth.config';
 
 export async function POST(request) {
@@ -144,9 +152,9 @@ export async function GET(request) {
 }
 `;
 
-    fs.mkdirSync('app/api/auth', { recursive: true });
-    fs.writeFileSync('app/api/auth/route.js', routeHandler);
-    console.log('✓ Created app/api/auth/route.js');
+    fs.mkdirSync("app/api/auth", { recursive: true });
+    fs.writeFileSync("app/api/auth/route.js", routeHandler);
+    console.log("✓ Created app/api/auth/route.js");
   }
 }
 
@@ -160,9 +168,17 @@ export function Providers({ children }) {
     <AuthProvider
       apiEndpoint="/api/auth"
       config={{
-        ${answers.features.includes('websocket') ? "sessionSyncEnabled: true," : ''}
-        ${answers.features.includes('toast') ? 'toastEnabled: true,' : ''}
-        ${answers.features.includes('indexeddb') ? "sessionStorage: 'indexedDB'," : ''}
+        ${
+          answers.features.includes("websocket")
+            ? "sessionSyncEnabled: true,"
+            : ""
+        }
+        ${answers.features.includes("toast") ? "toastEnabled: true," : ""}
+        ${
+          answers.features.includes("indexeddb")
+            ? "sessionStorage: 'indexedDB',"
+            : ""
+        }
       }}
     >
       {children}
@@ -171,8 +187,8 @@ export function Providers({ children }) {
 }
 `;
 
-  fs.writeFileSync('providers.jsx', provider);
-  console.log('✓ Created providers.jsx');
+  fs.writeFileSync("providers.jsx", provider);
+  console.log("✓ Created providers.jsx");
 }
 
 function createExamples(answers) {
@@ -220,11 +236,11 @@ export default function LoginPage() {
 }
 `;
 
-  fs.mkdirSync('examples', { recursive: true });
-  fs.writeFileSync('examples/login.jsx', loginExample);
-  console.log('✓ Created examples/login.jsx');
+  fs.mkdirSync("examples", { recursive: true });
+  fs.writeFileSync("examples/login.jsx", loginExample);
+  console.log("✓ Created examples/login.jsx");
 
-  if (answers.features.includes('rbac')) {
+  if (answers.features.includes("rbac")) {
     const protectedExample = `'use client';
 
 import { ProtectedRoute } from 'vista-auth/guards';
@@ -241,8 +257,8 @@ export default function AdminPage() {
   );
 }
 `;
-    fs.writeFileSync('examples/protected-route.jsx', protectedExample);
-    console.log('✓ Created examples/protected-route.jsx');
+    fs.writeFileSync("examples/protected-route.jsx", protectedExample);
+    console.log("✓ Created examples/protected-route.jsx");
   }
 }
 

@@ -25,28 +25,28 @@ export interface Session {
 export interface AuthConfig {
   // Session configuration
   sessionDuration?: number; // milliseconds, default 7 days
-  sessionStorage?: 'localStorage' | 'sessionStorage' | 'cookie' | 'indexedDB';
+  sessionStorage?: "localStorage" | "sessionStorage" | "cookie" | "indexedDB";
   sessionSyncEnabled?: boolean; // WebSocket sync for real-time apps
-  
+
   // Security
   bcryptRounds?: number; // default 10
   jwtSecret?: string;
   jwtExpiresIn?: string; // default '7d'
-  
+
   // Database adapter (optional)
   database?: DatabaseAdapter;
-  
+
   // Offline support
   offlineFallback?: boolean;
-  offlineStorage?: 'indexedDB';
-  
+  offlineStorage?: "indexedDB";
+
   // UI helpers
   toastEnabled?: boolean;
   errorMessagesEnabled?: boolean;
-  
+
   // WebSocket for real-time session sync
   websocketUrl?: string;
-  
+
   // Custom callbacks
   onSignIn?: (user: User) => void | Promise<void>;
   onSignOut?: () => void | Promise<void>;
@@ -61,7 +61,7 @@ export interface DatabaseAdapter {
   createUser: (data: Partial<User>) => Promise<User>;
   updateUser: (id: string, data: Partial<User>) => Promise<User>;
   deleteUser: (id: string) => Promise<void>;
-  
+
   // Session operations (optional - can use localStorage instead)
   createSession?: (userId: string, sessionData: any) => Promise<Session>;
   getSession?: (sessionId: string) => Promise<Session | null>;

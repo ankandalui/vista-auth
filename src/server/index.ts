@@ -2,4 +2,4 @@
  * Vista Auth - Server Exports
  */
 
-export { VistaAuthServer, createVistaAuth, getVistaAuth } from './core';
+export { VistaAuthServer, createVistaAuth, getVistaAuth } from "./core";

@@ -18,15 +18,17 @@ Use Vista Auth as an independent authentication solution:
 
 ```tsx
 // app/layout.tsx (Vista framework)
-import { AuthProvider } from 'vista-auth/client';
+import { AuthProvider } from "vista-auth/client";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html>
       <body>
-        <AuthProvider apiEndpoint="/api/auth">
-          {children}
-        </AuthProvider>
+        <AuthProvider apiEndpoint="/api/auth">{children}</AuthProvider>
       </body>
     </html>
   );
@@ -39,15 +41,15 @@ Vista framework can also include Vista Auth as a built-in feature:
 
 ```tsx
 // packages/vista-core/src/auth/index.ts
-export { useAuth, AuthProvider } from 'vista-auth/client';
-export { ProtectedRoute } from 'vista-auth/guards';
-export { createVistaAuth } from 'vista-auth/server';
+export { useAuth, AuthProvider } from "vista-auth/client";
+export { ProtectedRoute } from "vista-auth/guards";
+export { createVistaAuth } from "vista-auth/server";
 ```
 
 Then Vista users can import from `vista/auth`:
 
 ```tsx
-import { useAuth, AuthProvider } from 'vista/auth';
+import { useAuth, AuthProvider } from "vista/auth";
 ```
 
 ## Setup for Vista Projects
@@ -59,6 +61,7 @@ npx vista-auth init
 ```
 
 This creates:
+
 - `vista-auth.config.ts` - Server configuration
 - `app/api/auth/[...vistaauth]/route.ts` - API endpoints
 - `app/providers.tsx` - Client provider
@@ -70,9 +73,9 @@ This creates:
 
 ```ts
 // vista-auth.config.ts
-import { createVistaAuth } from 'vista-auth/server';
-import { createPrismaAdapter } from 'vista-auth/database';
-import { prisma } from './lib/prisma';
+import { createVistaAuth } from "vista-auth/server";
+import { createPrismaAdapter } from "vista-auth/database";
+import { prisma } from "./lib/prisma";
 
 export const auth = createVistaAuth({
   database: createPrismaAdapter(prisma),
@@ -87,31 +90,31 @@ export const auth = createVistaAuth({
 
 ```ts
 // app/api/auth/[...vistaauth]/route.ts
-import { auth } from '@/vista-auth.config';
+import { auth } from "@/vista-auth.config";
 
 export async function POST(request: Request) {
   const body = await request.json();
   const pathname = new URL(request.url).pathname;
-  
-  if (pathname.includes('/signin')) {
+
+  if (pathname.includes("/signin")) {
     return Response.json(await auth.signIn(body));
   }
-  
-  if (pathname.includes('/signup')) {
+
+  if (pathname.includes("/signup")) {
     return Response.json(await auth.signUp(body));
   }
-  
-  if (pathname.includes('/signout')) {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+
+  if (pathname.includes("/signout")) {
+    const token = request.headers.get("Authorization")?.replace("Bearer ", "");
     const payload = auth.verifyToken(token);
     return Response.json(await auth.signOut(payload.sessionId));
   }
-  
-  return Response.json({ error: 'Invalid endpoint' }, { status: 404 });
+
+  return Response.json({ error: "Invalid endpoint" }, { status: 404 });
 }
 
 export async function GET(request: Request) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '');
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   return Response.json(await auth.getSession(token));
 }
 ```
@@ -120,9 +123,9 @@ export async function GET(request: Request) {
 
 ```tsx
 // app/providers.tsx
-'use client';
+"use client";
 
-import { AuthProvider } from 'vista-auth/client';
+import { AuthProvider } from "vista-auth/client";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -131,7 +134,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       config={{
         sessionSyncEnabled: true,
         toastEnabled: true,
-        sessionStorage: 'localStorage',
+        sessionStorage: "localStorage",
       }}
     >
       {children}
@@ -142,9 +145,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ```tsx
 // app/layout.tsx
-import { Providers } from './providers';
+import { Providers } from "./providers";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html>
       <body>
@@ -161,10 +168,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ```tsx
 // app/login/page.tsx
-'use client';
+"use client";
 
-import { useAuth } from 'vista-auth/client';
-import { useState } from 'react';
+import { useAuth } from "vista-auth/client";
+import { useState } from "react";
 
 export default function LoginPage() {
   const { signIn, signUp, isAuthenticated, user } = useAuth();
@@ -175,30 +182,32 @@ export default function LoginPage() {
   }
 
   return (
-    <form onSubmit={async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.currentTarget);
-      const credentials = {
-        email: formData.get('email') as string,
-        password: formData.get('password') as string,
-        name: formData.get('name') as string,
-      };
-      
-      if (isSignUp) {
-        await signUp(credentials);
-      } else {
-        await signIn(credentials);
-      }
-    }}>
-      <h1>{isSignUp ? 'Sign Up' : 'Sign In'}</h1>
-      
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        const credentials = {
+          email: formData.get("email") as string,
+          password: formData.get("password") as string,
+          name: formData.get("name") as string,
+        };
+
+        if (isSignUp) {
+          await signUp(credentials);
+        } else {
+          await signIn(credentials);
+        }
+      }}
+    >
+      <h1>{isSignUp ? "Sign Up" : "Sign In"}</h1>
+
       <input name="email" type="email" placeholder="Email" required />
       <input name="password" type="password" placeholder="Password" required />
       {isSignUp && <input name="name" placeholder="Name" />}
-      
-      <button type="submit">{isSignUp ? 'Sign Up' : 'Sign In'}</button>
+
+      <button type="submit">{isSignUp ? "Sign Up" : "Sign In"}</button>
       <button type="button" onClick={() => setIsSignUp(!isSignUp)}>
-        {isSignUp ? 'Have an account? Sign In' : 'Need an account? Sign Up'}
+        {isSignUp ? "Have an account? Sign In" : "Need an account? Sign Up"}
       </button>
     </form>
   );
@@ -209,10 +218,10 @@ export default function LoginPage() {
 
 ```tsx
 // app/dashboard/page.tsx
-'use client';
+"use client";
 
-import { ProtectedRoute } from 'vista-auth/guards';
-import { useAuth } from 'vista-auth/client';
+import { ProtectedRoute } from "vista-auth/guards";
+import { useAuth } from "vista-auth/client";
 
 export default function DashboardPage() {
   const { user, signOut } = useAuth();
@@ -233,17 +242,17 @@ export default function DashboardPage() {
 
 ```tsx
 // app/admin/page.tsx
-'use client';
+"use client";
 
-import { ProtectedRoute } from 'vista-auth/guards';
-import { useAuth } from 'vista-auth/client';
+import { ProtectedRoute } from "vista-auth/guards";
+import { useAuth } from "vista-auth/client";
 
 export default function AdminPage() {
   const { user } = useAuth();
 
   return (
-    <ProtectedRoute 
-      roles={['admin']}
+    <ProtectedRoute
+      roles={["admin"]}
       redirect="/login"
       fallback={<div>Access Denied - Admin Only</div>}
     >
@@ -260,19 +269,19 @@ export default function AdminPage() {
 
 ```ts
 // middleware.ts (Vista framework)
-import { createNextMiddleware } from 'vista-auth/middleware';
+import { createNextMiddleware } from "vista-auth/middleware";
 
 export default createNextMiddleware({
-  publicPaths: ['/', '/login', '/signup'],
-  protectedPaths: ['/dashboard', '/profile'],
+  publicPaths: ["/", "/login", "/signup"],
+  protectedPaths: ["/dashboard", "/profile"],
   roleBasedPaths: {
-    '/admin/*': ['admin'],
-    '/moderator/*': ['admin', 'moderator'],
+    "/admin/*": ["admin"],
+    "/moderator/*": ["admin", "moderator"],
   },
 });
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
 ```
 
@@ -306,16 +315,16 @@ model Session {
 
 ```ts
 // lib/prisma.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 export const prisma = new PrismaClient();
 ```
 
 ```ts
 // vista-auth.config.ts
-import { createVistaAuth } from 'vista-auth/server';
-import { createPrismaAdapter } from 'vista-auth/database';
-import { prisma } from './lib/prisma';
+import { createVistaAuth } from "vista-auth/server";
+import { createPrismaAdapter } from "vista-auth/database";
+import { prisma } from "./lib/prisma";
 
 export const auth = createVistaAuth({
   database: createPrismaAdapter(prisma),
@@ -337,27 +346,29 @@ export const auth = createVistaAuth({
 If you previously used Vista framework's built-in auth, migration is simple:
 
 ### Before (Vista Framework Auth)
+
 ```tsx
-import { useAuth } from 'vista/auth';
+import { useAuth } from "vista/auth";
 ```
 
 ### After (Standalone Vista Auth)
+
 ```tsx
-import { useAuth } from 'vista-auth/client';
+import { useAuth } from "vista-auth/client";
 ```
 
 Everything else remains the same! The API is identical.
 
 ## Comparison: Vista Framework vs Standalone
 
-| Aspect | Vista Framework (Built-in) | Vista Auth (Standalone) |
-|--------|----------------------------|-------------------------|
-| **Installation** | Included with Vista | `npm install vista-auth` |
-| **Updates** | With Vista releases | Independent versioning |
-| **Flexibility** | Vista-specific | Works with any framework |
-| **Features** | Core auth only | Full feature set (RBAC, WebSocket, etc.) |
-| **Bundle** | Part of Vista core | Separate, tree-shakeable |
-| **Use Case** | Vista-only projects | Multi-framework projects |
+| Aspect           | Vista Framework (Built-in) | Vista Auth (Standalone)                  |
+| ---------------- | -------------------------- | ---------------------------------------- |
+| **Installation** | Included with Vista        | `npm install vista-auth`                 |
+| **Updates**      | With Vista releases        | Independent versioning                   |
+| **Flexibility**  | Vista-specific             | Works with any framework                 |
+| **Features**     | Core auth only             | Full feature set (RBAC, WebSocket, etc.) |
+| **Bundle**       | Part of Vista core         | Separate, tree-shakeable                 |
+| **Use Case**     | Vista-only projects        | Multi-framework projects                 |
 
 ## Recommendation
 
